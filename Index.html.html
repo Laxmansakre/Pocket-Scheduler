@@ -1,0 +1,1694 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pocket Scheduler — Activity &amp; Gantt Builder</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 26'%3E%3Crect x='2' y='3' width='22' height='20' rx='4' fill='%2316233D'/%3E%3Crect x='2' y='3' width='22' height='6' rx='4' fill='%23FF6B35'/%3E%3Cline x1='6' y1='13' x2='20' y2='13' stroke='%23B8C4DE' stroke-width='1.6'/%3E%3Cline x1='6' y1='17' x2='16' y2='17' stroke='%23B8C4DE' stroke-width='1.6'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EAEFF6;
+  --panel:#FFFFFF;
+  --ink:#16233D;
+  --ink-soft:#4B5975;
+  --line:#CBD6E8;
+  --line-soft:#E1E8F3;
+  --accent:#FF6B35;
+  --accent-dark:#D9531F;
+  --blue:#2F6FED;
+  --blue-soft:#E7EEFE;
+  --summary:#7C8AA5;
+  --weekend:#DCE4F0;
+  --holiday:#F6D9C9;
+  --danger:#D5301F;
+  --warn:#B8790B;
+  --warn-bg:#FFF3DE;
+  --row-h:34px;
+  --hdr-h:44px;
+  font-size:15px;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;height:100%;background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans',system-ui,sans-serif;}
+body{
+  background-image:
+    linear-gradient(var(--line-soft) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line-soft) 1px, transparent 1px);
+  background-size:28px 28px;
+}
+.mono{font-family:'IBM Plex Mono',monospace;}
+#app{display:flex;flex-direction:column;height:100vh;}
+
+/* ---------- Top bar ---------- */
+.topbar{
+  background:var(--ink); color:#fff; padding:10px 16px;
+  display:flex; align-items:center; gap:16px; flex-wrap:wrap;
+  border-bottom:3px solid var(--accent);
+}
+.topbar .brand{display:flex;align-items:center;gap:10px;margin-right:4px;}
+.topbar .brand .swatch{width:14px;height:14px;background:var(--accent);border:2px solid #fff;transform:rotate(45deg);flex:none;}
+.topbar .brand b{font-size:16px;letter-spacing:.2px;}
+.topbar .brand span{display:block;font-size:11px;color:#B8C4DE;font-family:'IBM Plex Mono',monospace;}
+.field-inline{display:flex;flex-direction:column;gap:2px;}
+.field-inline label{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#AEBBD6;}
+.field-inline input[type=text],.field-inline input[type=date]{
+  background:#22314F;border:1px solid #3C4C6E;color:#fff;border-radius:4px;padding:5px 8px;font-size:13px;font-family:'IBM Plex Mono',monospace;
+}
+.spacer{flex:1;}
+.toolbar-actions{display:flex;gap:8px;flex-wrap:wrap;}
+button{
+  cursor:pointer;border:none;border-radius:5px;font-family:inherit;font-weight:600;font-size:12.5px;
+  padding:8px 12px;transition:transform .08s ease, background .15s ease;
+}
+button:active{transform:translateY(1px);}
+.btn-accent{background:var(--accent);color:#fff;}
+.btn-accent:hover{background:var(--accent-dark);}
+.btn-ghost{background:#2A3B5C;color:#fff;}
+.btn-ghost:hover{background:#344872;}
+.btn-outline{background:transparent;color:#fff;border:1px solid #4A5A7C;}
+.btn-outline:hover{background:#22314F;}
+.zoom-group{display:flex;border:1px solid #3C4C6E;border-radius:5px;overflow:hidden;}
+.zoom-group button{border-radius:0;background:#22314F;color:#fff;padding:7px 10px;}
+.zoom-group button:hover{background:#344872;}
+
+/* ---------- Legend / help strip ---------- */
+.legend{
+  background:#F2F5FA;border-bottom:1px solid var(--line);
+  padding:6px 16px;font-size:11.5px;color:var(--ink-soft);
+  display:flex;gap:16px;flex-wrap:wrap;align-items:center;
+}
+.legend b{color:var(--ink);}
+.legend .tag{background:var(--panel);border:1px solid var(--line);border-radius:3px;padding:1px 6px;font-family:'IBM Plex Mono',monospace;}
+.legend button{background:none;border:none;color:var(--blue);font-weight:600;font-size:11.5px;padding:0;cursor:pointer;}
+
+/* ---------- Banners ---------- */
+#errorBanner{display:none;background:#FDEBE8;border-bottom:1px solid #F1B8AD;color:var(--danger);padding:8px 16px;font-size:13px;font-weight:600;}
+#warnBanner{display:none;background:var(--warn-bg);border-bottom:1px solid #EBCB8E;color:var(--warn);padding:6px 16px;font-size:12.5px;font-weight:600;}
+
+/* ---------- Workspace ---------- */
+.workspace{flex:1;display:flex;overflow:hidden;background:var(--panel);margin:14px;border:1px solid var(--line);border-radius:8px;box-shadow:0 1px 3px rgba(22,35,61,.08);overflow:hidden;}
+
+.table-pane{width:900px;flex:none;display:flex;flex-direction:column;border-right:2px solid var(--line);min-width:320px;max-width:1400px;resize:horizontal;overflow-x:auto;overflow-y:hidden;}
+.table-head-row{
+  height:var(--hdr-h);flex:none;display:flex;align-items:stretch;background:#F5F7FB;border-bottom:2px solid var(--line);
+  font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);font-weight:600;min-width:1080px;
+}
+.table-head-row > div{display:flex;align-items:center;padding:0 6px;border-right:1px solid var(--line-soft);}
+.table-body{flex:1;overflow-y:auto;overflow-x:hidden;}
+.row{display:flex;align-items:stretch;height:var(--row-h);border-bottom:1px solid var(--line-soft);min-width:1080px;}
+.row:hover{background:#F7F9FD;}
+.row.summary-row{background:#F1F3F8;font-weight:600;}
+.row > div{display:flex;align-items:center;padding:0 5px;border-right:1px solid var(--line-soft);overflow:hidden;position:relative;}
+.col-del{width:26px;flex:none;justify-content:center;}
+.col-wbs{width:56px;flex:none;}
+.col-id{width:42px;flex:none;color:var(--blue);}
+.col-type{width:98px;flex:none;}
+.col-name{width:180px;flex:1;min-width:140px;}
+.col-dur{width:44px;flex:none;}
+.col-durunit{width:44px;flex:none;}
+.col-qty{width:50px;flex:none;}
+.col-unit{width:46px;flex:none;}
+.col-pred{width:100px;flex:none;}
+.col-succ{width:100px;flex:none;}
+.col-start{width:88px;flex:none;}
+.col-finish{width:82px;flex:none;}
+.col-float{width:52px;flex:none;justify-content:center;}
+.row input, .row select{
+  width:100%;border:1px solid transparent;background:transparent;font-family:'IBM Plex Mono',monospace;font-size:12px;
+  padding:4px 3px;border-radius:3px;color:var(--ink);
+}
+.row .col-name input{font-family:'IBM Plex Sans',sans-serif;font-size:13px;}
+.row input:hover,.row select:hover{border-color:var(--line);}
+.row input:focus,.row select:focus{border-color:var(--blue);outline:none;background:#fff;}
+.row input:disabled,.row select:disabled{color:var(--summary);background:transparent;opacity:.6;}
+.delbtn{width:20px;height:20px;border-radius:4px;background:#EDEFF5;color:var(--ink-soft);border:none;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0;}
+.delbtn:hover{background:var(--danger);color:#fff;}
+.float-val.crit{color:var(--danger);font-weight:700;}
+.float-val{font-family:'IBM Plex Mono',monospace;font-size:11.5px;}
+.badge{font-size:9px;border-radius:3px;padding:1px 4px;margin-left:3px;font-weight:700;flex:none;}
+.badge-ms{background:var(--blue-soft);color:var(--blue);}
+.badge-ev{background:#EAE1FB;color:#6B3FC4;}
+.badge-open{background:var(--warn-bg);color:var(--warn);cursor:help;}
+.hidden{display:none !important;}
+
+.addrow-bar{flex:none;padding:8px;border-top:1px solid var(--line-soft);background:#FAFBFD;}
+.addrow-bar button{background:var(--blue-soft);color:var(--blue);width:100%;padding:7px;border-radius:5px;font-weight:700;}
+.addrow-bar button:hover{background:#D9E4FE;}
+
+/* ---------- Timeline pane ---------- */
+.timeline-pane{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:200px;}
+.timeline-header-wrap{height:var(--hdr-h);flex:none;overflow:hidden;position:relative;border-bottom:2px solid var(--line);background:#F5F7FB;}
+.timeline-header-inner{position:absolute;top:0;left:0;height:100%;}
+.tl-month{position:absolute;top:0;height:18px;font-size:10.5px;font-weight:700;color:var(--ink-soft);border-left:1px solid var(--line);padding-left:4px;line-height:18px;text-transform:uppercase;letter-spacing:.04em;}
+.tl-day{position:absolute;top:18px;height:26px;border-left:1px solid var(--line-soft);font-size:9.5px;color:var(--ink-soft);text-align:center;line-height:26px;font-family:'IBM Plex Mono',monospace;}
+.tl-day.weekend{background:var(--weekend);}
+.tl-day.holiday{background:var(--holiday);}
+
+.timeline-body-wrap{flex:1;overflow:auto;position:relative;}
+.timeline-body-inner{position:relative;}
+.tl-row-bg{position:absolute;left:0;right:0;height:var(--row-h);border-bottom:1px solid var(--line-soft);}
+.tl-row-bg.summary-bg{background:#F1F3F8;}
+.tl-weekend-col{position:absolute;top:0;bottom:0;background:var(--weekend);opacity:.6;}
+.tl-holiday-col{position:absolute;top:0;bottom:0;background:var(--holiday);opacity:.7;}
+
+.bar{
+  position:absolute;height:20px;border-radius:4px;top:7px;
+  background:linear-gradient(180deg,#3C7DFF,#2F6FED);
+  box-shadow:0 1px 2px rgba(0,0,0,.25) inset, 0 1px 2px rgba(22,35,61,.25);
+  display:flex;align-items:center;padding:0 6px;overflow:hidden;white-space:nowrap;
+  font-size:11px;color:#fff;font-weight:600;cursor:default;
+}
+.bar.event{background:linear-gradient(180deg,#8B5FE0,#6B3FC4);}
+.bar.critical{
+  background:repeating-linear-gradient(135deg, var(--accent) 0 8px, var(--accent-dark) 8px 16px);
+  box-shadow:0 1px 2px rgba(0,0,0,.3) inset,0 1px 3px rgba(22,35,61,.35);
+}
+.bar .bar-label{position:absolute;left:calc(100% + 6px);color:var(--ink);font-size:11px;font-weight:600;white-space:nowrap;}
+.bar.milestone{width:18px !important;height:18px;top:8px;background:none;box-shadow:none;border-radius:0;}
+.bar.milestone .diamond{width:18px;height:18px;background:var(--ink);transform:rotate(45deg);position:absolute;left:0;top:0;}
+.bar.milestone.critical .diamond{background:var(--accent-dark);}
+.bar.summary-bar{height:10px;top:12px;border-radius:2px;background:var(--summary);}
+.bar.summary-bar::before,.bar.summary-bar::after{content:'';position:absolute;top:-3px;width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:9px solid var(--summary);}
+.bar.summary-bar::before{left:-1px;}
+.bar.summary-bar::after{right:-1px;transform:scaleX(-1);}
+
+/* ---------- Status bar ---------- */
+.statusbar{flex:none;padding:8px 20px;background:var(--ink);color:#CBD6E8;font-size:12px;display:flex;gap:22px;font-family:'IBM Plex Mono',monospace;align-items:center;flex-wrap:wrap;}
+.statusbar b{color:#fff;}
+.statusbar .crit-dot{width:8px;height:8px;background:var(--accent);display:inline-block;border-radius:50%;margin-right:5px;}
+.statusbar .warn-dot{width:8px;height:8px;background:var(--warn);display:inline-block;border-radius:50%;margin-right:5px;}
+
+/* ---------- Modal (calendar settings) ---------- */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(22,35,61,.5);z-index:50;align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal-panel{background:#fff;border-radius:10px;width:420px;max-width:92vw;max-height:86vh;overflow:auto;box-shadow:0 10px 40px rgba(0,0,0,.3);}
+.modal-head{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;}
+.modal-head h3{margin:0;font-size:15px;}
+.modal-head button{background:none;color:var(--ink-soft);font-size:18px;padding:2px 8px;}
+.modal-body{padding:16px 20px;}
+.modal-body h4{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft);margin:14px 0 8px;}
+.modal-body h4:first-child{margin-top:0;}
+.dow-grid{display:flex;gap:6px;flex-wrap:wrap;}
+.dow-chip{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;color:var(--ink-soft);}
+.dow-chip input{width:16px;height:16px;}
+.holiday-row{display:flex;gap:8px;margin-bottom:8px;align-items:center;}
+.holiday-row input[type=date]{flex:1;padding:6px;border:1px solid var(--line);border-radius:4px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;}
+.holiday-row input[type=text]{flex:1;padding:6px;border:1px solid var(--line);border-radius:4px;font-size:12.5px;}
+.holiday-list{display:flex;flex-direction:column;gap:6px;margin-bottom:10px;max-height:160px;overflow:auto;}
+.holiday-item{display:flex;align-items:center;justify-content:space-between;background:#F5F7FB;border:1px solid var(--line-soft);border-radius:5px;padding:5px 8px;font-size:12px;}
+.holiday-item button{background:none;color:var(--danger);font-size:14px;padding:0 4px;}
+.modal-foot{padding:12px 20px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:8px;}
+.radio-group{display:flex;flex-direction:column;gap:8px;}
+.radio-group label{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink);}
+.col-check-grid{display:flex;flex-wrap:wrap;gap:8px 14px;}
+.col-check-grid label{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink);}
+
+/* ---------- Column resize handles ---------- */
+.table-head-row > div{position:relative;}
+.col-resize-handle{position:absolute;right:-3px;top:0;bottom:0;width:6px;cursor:col-resize;z-index:3;}
+.col-resize-handle:hover,.col-resize-handle.active{background:var(--blue);opacity:.45;}
+
+/* ---------- Printable content (built fresh before each print; hidden on screen) ---------- */
+#printArea{display:none;}
+.print-title{font-size:18px;font-weight:700;margin-bottom:2px;color:#16233D;}
+.print-meta{font-size:11px;color:#555;margin-bottom:14px;font-family:'IBM Plex Mono',monospace;}
+.print-table{width:100%;border-collapse:collapse;font-size:10.5px;margin-bottom:10px;}
+.print-table thead{display:table-header-group;}
+.print-table tr{page-break-inside:avoid;}
+.print-table th,.print-table td{border:1px solid #ccc;padding:3px 5px;text-align:left;vertical-align:top;}
+.print-table th{background:#eee;text-transform:uppercase;font-size:8.5px;letter-spacing:.03em;}
+.print-table tr.summary td{background:#f3f3f3;font-weight:700;}
+.print-table td.crit{color:#D5301F;font-weight:700;}
+
+/* Paginated Table+Gantt / Gantt engine — one .print-page per physical printed sheet */
+.print-page{page-break-inside:avoid;}
+.print-page.page-break{page-break-after:always;}
+.print-page-head{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid #16233D;padding-bottom:6px;margin-bottom:6px;}
+.ph-title{font-size:14px;font-weight:700;color:#16233D;}
+.ph-meta{font-size:10px;color:#555;font-family:'IBM Plex Mono',monospace;}
+.print-grid{display:flex;border:1px solid #ccc;}
+.pg-frozen{flex:none;border-right:2px solid #16233D;}
+.pg-row{display:flex;align-items:center;height:18px;border-bottom:1px solid #eee;font-size:9px;overflow:hidden;box-sizing:border-box;}
+.pg-head{background:#eee;font-weight:700;text-transform:uppercase;font-size:7.5px;letter-spacing:.03em;border-bottom:1px solid #16233D;align-items:flex-end;padding-bottom:2px;}
+.pg-summary{font-weight:700;background:#f6f6f6;}
+.pg-wbs{width:32px;flex:none;padding-left:3px;}
+.pg-id{width:28px;flex:none;color:#2F6FED;}
+.pg-name{flex:1;min-width:60px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;padding:0 3px;}
+.pg-dur{width:32px;flex:none;text-align:right;padding-right:3px;}
+.pg-c{flex:none;padding:0 3px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;box-sizing:border-box;}
+.pg-c.crit{color:#D5301F;font-weight:700;}
+
+.pg-scale{position:relative;overflow:hidden;}
+.pg-scale-head{position:relative;background:#eee;border-bottom:1px solid #16233D;}
+.pg-tier{position:absolute;overflow:hidden;border-left:1px solid #ccc;box-sizing:border-box;font-weight:700;color:#555;text-align:center;}
+.pg-tier-top{font-size:7.5px;text-transform:uppercase;text-align:left;padding-left:3px;border-bottom:1px solid #ddd;font-weight:700;}
+.pg-tier-mid{font-size:7.5px;color:#555;}
+.pg-tier-bot{font-size:8px;font-family:'IBM Plex Mono',monospace;color:#16233D;font-weight:600;}
+.pg-tier.wknd{color:#B7C1D6;}
+.pg-daybg{position:absolute;top:0;background:#EEF1F7;}
+.pg-daybg.hol{background:#F6D9C9;}
+.pg-track-row{position:relative;height:18px;border-bottom:1px solid #eee;box-sizing:border-box;}
+.pg-bar{position:absolute;top:3px;height:12px;border-radius:2px;background:#2F6FED;}
+.pg-bar.crit{background:repeating-linear-gradient(135deg,#FF6B35 0 5px,#D9531F 5px 10px);}
+.pg-bar.summary{height:6px;top:6px;background:#7C8AA5;border-radius:1px;}
+.pg-bar.ms{width:11px !important;height:11px;top:3.5px;background:transparent;box-shadow:none;border-radius:0;}
+.pg-diamond{width:11px;height:11px;background:#16233D;transform:rotate(45deg);position:absolute;left:0;top:0;border-radius:1px;}
+.pg-diamond.crit{background:#D9531F;}
+.pg-bar-label{position:absolute;left:calc(100% + 5px);top:50%;transform:translateY(-50%);font-size:8px;color:#16233D;white-space:nowrap;font-weight:600;}
+.pg-gridline{position:absolute;top:0;bottom:0;width:1px;background:#e4e8f0;}
+
+/* ---------- Print ---------- */
+@media print{
+  html,body{background:#fff;}
+  #app,.modal-overlay{display:none !important;}
+  #printArea{display:block !important;}
+  * { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  @page{size:landscape;margin:12mm;}
+}
+
+.table-body::-webkit-scrollbar,.timeline-body-wrap::-webkit-scrollbar,.table-pane::-webkit-scrollbar{height:10px;width:10px;}
+.table-body::-webkit-scrollbar-thumb,.timeline-body-wrap::-webkit-scrollbar-thumb,.table-pane::-webkit-scrollbar-thumb{background:#C3CEE0;border-radius:5px;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div class="topbar">
+    <div class="brand">
+      <svg width="26" height="26" viewBox="0 0 26 26" style="flex:none;">
+        <rect x="2" y="3" width="22" height="20" rx="4" fill="#22314F" stroke="#fff" stroke-width="1.2"/>
+        <rect x="2" y="3" width="22" height="6" rx="4" fill="#FF6B35"/>
+        <line x1="6" y1="13" x2="20" y2="13" stroke="#B8C4DE" stroke-width="1.6"/>
+        <line x1="6" y1="17" x2="16" y2="17" stroke="#B8C4DE" stroke-width="1.6"/>
+      </svg>
+      <div><b>Pocket Scheduler</b><span>activity &amp; gantt builder</span></div>
+    </div>
+
+    <div class="field-inline">
+      <label>Project</label>
+      <input type="text" id="projName" class="mono" value="New Project">
+    </div>
+    <div class="field-inline">
+      <label>Start date</label>
+      <input type="date" id="projStart">
+    </div>
+
+    <button class="btn-outline" id="btnCalendar">📅 Calendar</button>
+
+    <div class="spacer"></div>
+
+    <div class="zoom-group">
+      <button id="zoomOut" title="Zoom out">−</button>
+      <button id="zoomIn" title="Zoom in">+</button>
+    </div>
+    <div class="toolbar-actions">
+      <button class="btn-outline" id="btnNew">New</button>
+      <button class="btn-outline" id="btnLoad">Open…</button>
+      <button class="btn-outline" id="btnSave">Save .json</button>
+      <button class="btn-ghost" id="btnCsv">Export CSV</button>
+      <button class="btn-ghost" id="btnPrint">Print / PDF</button>
+      <button class="btn-accent" id="btnAdd">+ Activity</button>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span><b>WBS</b> dot codes to nest, e.g. <span class="tag">1</span> <span class="tag">1.1</span> — a code with children auto-becomes a summary bar</span>
+    <span><b>Pred/Succ</b> comma list, e.g. <span class="tag">A2</span> <span class="tag">A3SS+2</span> <span class="tag">A4FF-1</span> (FS/SS/FF/SF, +lag/-lead days)</span>
+    <span><b>Duration units</b> h/d/w/m — week=5 working days, month≈20 working days</span>
+    <button id="btnDemo">Load example project</button>
+  </div>
+
+  <div id="errorBanner"></div>
+  <div id="warnBanner"></div>
+
+  <div class="workspace">
+    <div class="table-pane" id="tablePane">
+      <div class="table-head-row">
+        <div class="col-del"></div>
+        <div class="col-wbs">WBS<div class="col-resize-handle" data-col="wbs"></div></div>
+        <div class="col-id">ID<div class="col-resize-handle" data-col="id"></div></div>
+        <div class="col-type">Type<div class="col-resize-handle" data-col="type"></div></div>
+        <div class="col-name">Activity<div class="col-resize-handle" data-col="name"></div></div>
+        <div class="col-dur">Dur<div class="col-resize-handle" data-col="dur"></div></div>
+        <div class="col-durunit">Unit<div class="col-resize-handle" data-col="durunit"></div></div>
+        <div class="col-qty">Qty<div class="col-resize-handle" data-col="qty"></div></div>
+        <div class="col-unit">UOM<div class="col-resize-handle" data-col="unit"></div></div>
+        <div class="col-pred">Predecessors<div class="col-resize-handle" data-col="pred"></div></div>
+        <div class="col-succ">Successors<div class="col-resize-handle" data-col="succ"></div></div>
+        <div class="col-start">Start<div class="col-resize-handle" data-col="start"></div></div>
+        <div class="col-finish">Finish<div class="col-resize-handle" data-col="finish"></div></div>
+        <div class="col-float">Float</div>
+      </div>
+      <div class="table-body" id="tableBody"></div>
+      <div class="addrow-bar"><button id="btnAdd2">+ Add activity</button></div>
+    </div>
+
+    <div class="timeline-pane">
+      <div class="timeline-header-wrap" id="timelineHeaderWrap">
+        <div class="timeline-header-inner" id="timelineHeaderInner"></div>
+      </div>
+      <div class="timeline-body-wrap" id="timelineBodyWrap">
+        <div class="timeline-body-inner" id="timelineBodyInner"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="statusbar" id="statusBar"></div>
+</div>
+
+<input type="file" id="fileInput" accept=".json" style="display:none">
+
+<!-- Print / PDF options modal -->
+<div class="modal-overlay" id="printModal">
+  <div class="modal-panel">
+    <div class="modal-head"><h3>Print / PDF</h3><button id="printClose">✕</button></div>
+    <div class="modal-body">
+      <h4>Include</h4>
+      <div class="radio-group">
+        <label><input type="radio" name="printMode" value="both" checked> Table + Gantt (side by side, paginated)</label>
+        <label><input type="radio" name="printMode" value="table"> Table only</label>
+        <label><input type="radio" name="printMode" value="gantt"> Gantt chart only</label>
+      </div>
+      <div id="printTimescaleSection">
+        <h4>Timescale</h4>
+        <select id="printTimescaleSel">
+          <option value="day">Days</option>
+          <option value="week">Weeks</option>
+          <option value="month">Months</option>
+          <option value="quarter">Quarterly</option>
+          <option value="year">Yearly</option>
+        </select>
+      </div>
+      <div id="printColSection">
+        <h4>Columns <span style="font-weight:400;text-transform:none;color:var(--ink-soft);">(Activity name always shown)</span></h4>
+        <div class="col-check-grid" id="printColGrid"></div>
+      </div>
+      <div id="printColNote" style="display:none;font-size:12px;color:var(--ink-soft);line-height:1.5;"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-outline" style="color:var(--ink);border-color:var(--line);" id="printCancel">Cancel</button>
+      <button class="btn-accent" id="printGo">Generate &amp; print</button>
+    </div>
+  </div>
+</div>
+
+<!-- Hidden container populated fresh before each print; only visible in print media -->
+<div id="printArea"></div>
+
+<!-- Calendar settings modal -->
+<div class="modal-overlay" id="calModal">
+  <div class="modal-panel">
+    <div class="modal-head"><h3>Project calendar</h3><button id="calClose">✕</button></div>
+    <div class="modal-body">
+      <h4>Working days</h4>
+      <div class="dow-grid" id="dowGrid"></div>
+      <h4>Holidays / site closures</h4>
+      <div class="holiday-row">
+        <input type="date" id="holDate">
+        <input type="text" id="holLabel" placeholder="Label (optional)">
+        <button class="btn-outline" id="holAdd" style="background:var(--blue);color:#fff;">Add</button>
+      </div>
+      <div class="holiday-list" id="holidayList"></div>
+    </div>
+    <div class="modal-foot"><button class="btn-accent" id="calDone">Done</button></div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ============================= STATE ============================= */
+var DEFAULT_COL_WIDTHS = { wbs:56, id:42, type:98, name:190, dur:44, durunit:44, qty:50, unit:46, pred:100, succ:100, start:88, finish:82 };
+var COL_CLASS = { wbs:'col-wbs', id:'col-id', type:'col-type', name:'col-name', dur:'col-dur', durunit:'col-durunit', qty:'col-qty', unit:'col-unit', pred:'col-pred', succ:'col-succ', start:'col-start', finish:'col-finish' };
+
+var state = {
+  projectName: "New Project",
+  startDate: todayISO(),
+  calendar: { workDays: [false,true,true,true,true,true,false], holidays: [] }, // index 0=Sun..6=Sat
+  dayWidth: 22,
+  colWidths: Object.assign({}, DEFAULT_COL_WIDTHS),
+  nextSeq: 1,
+  activities: []   // {id, wbs, name, type:'task'|'milestone'|'event', duration, durationUnit:'h'|'d'|'w'|'m', qty, unit, predecessors, fixedDate}
+};
+
+function todayISO(){ var d=new Date(); return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate()); }
+function pad(n){ return n<10 ? "0"+n : ""+n; }
+
+function newActivity(overrides){
+  var id = "A" + state.nextSeq++;
+  var a = {id:id, wbs:"1", name:"New activity", type:"task", duration:1, durationUnit:"d", qty:"", unit:"", predecessors:"", fixedDate:""};
+  if(overrides) Object.assign(a, overrides);
+  return a;
+}
+function findActivity(id){ return state.activities.find(function(a){return a.id===id;}); }
+
+/* ============================= DEMO DATA ============================= */
+function loadDemo(){
+  state.projectName = "Kitchen Renovation — 24 Maple St";
+  state.startDate = todayISO();
+  state.nextSeq = 1;
+  state.calendar = { workDays: [false,true,true,true,true,true,false], holidays: [] };
+  state.activities = [
+    newActivity({wbs:"1", name:"Kitchen Renovation"}),
+    newActivity({wbs:"1.1", name:"Permit approved", type:"milestone", duration:0}),
+    newActivity({wbs:"1.2", name:"Demo existing cabinetry", duration:2, qty:"180", unit:"sf", predecessors:"A2"}),
+    newActivity({wbs:"1.3", name:"Rough electrical & plumbing", duration:3, qty:"1", unit:"ls", predecessors:"A3"}),
+    newActivity({wbs:"1.4", name:"Drywall patch & paint", duration:2, qty:"180", unit:"sf", predecessors:"A4"}),
+    newActivity({wbs:"1.5", name:"Flooring install", duration:3, qty:"180", unit:"sf", predecessors:"A5FS+1"}),
+    newActivity({wbs:"1.6", name:"Cabinet install", duration:4, qty:"14", unit:"ea", predecessors:"A6SS+1"}),
+    newActivity({wbs:"1.7", name:"Countertop template", duration:1, qty:"1", unit:"ls", predecessors:"A6"}),
+    newActivity({wbs:"1.8", name:"Countertop install", duration:2, qty:"32", unit:"sf", predecessors:"A7FS+5,A8"}),
+    newActivity({wbs:"1.9", name:"Backsplash tile", duration:2, qty:"28", unit:"sf", predecessors:"A9"}),
+    newActivity({wbs:"1.10", name:"Appliance hookup", duration:1, qty:"5", unit:"ea", predecessors:"A9"}),
+    newActivity({wbs:"1.11", name:"Client walkthrough", type:"event", duration:0, fixedDate: offsetISOFromToday(14)}),
+    newActivity({wbs:"1.12", name:"Final punch list", duration:1, qty:"1", unit:"ls", predecessors:"A10,A11"})
+  ];
+  syncTopFields();
+  recalcFull();
+}
+function offsetISOFromToday(days){ var d=new Date(); d.setDate(d.getDate()+days); return dateISO(d); }
+
+/* ============================= WBS helpers ============================= */
+function wbsSegments(w){ return (w||"1").split(".").map(function(s){ var n=parseInt(s,10); return isNaN(n)?0:n; }); }
+function wbsCompare(a,b){
+  var sa=wbsSegments(a.wbs), sb=wbsSegments(b.wbs);
+  var len=Math.max(sa.length,sb.length);
+  for(var i=0;i<len;i++){
+    var va=sa[i]===undefined?-1:sa[i], vb=sb[i]===undefined?-1:sb[i];
+    if(va!==vb) return va-vb;
+  }
+  return 0;
+}
+function sortedActivities(){ var arr=state.activities.slice(); arr.sort(wbsCompare); return arr; }
+function isSummary(act, all){
+  var prefix = act.wbs + ".";
+  for(var i=0;i<all.length;i++){ if(all[i]!==act && all[i].wbs.indexOf(prefix)===0) return true; }
+  return false;
+}
+function wbsLevel(w){ return (w||"1").split(".").length; }
+
+/* ============================= Predecessor token parsing ============================= */
+var PRED_RE = /^([A-Za-z0-9]+?)(FS|SS|FF|SF)?([+-]\d+)?$/i;
+function parsePredList(raw){
+  if(!raw) return [];
+  return raw.split(",").map(function(t){return t.trim();}).filter(Boolean).map(function(tok){
+    var m = PRED_RE.exec(tok);
+    if(!m) return {raw:tok, invalid:true};
+    return { id:m[1], type:(m[2]||"FS").toUpperCase(), lag:m[3]?parseInt(m[3],10):0, raw:tok };
+  });
+}
+function serializeToken(id,type,lag){
+  var s=id;
+  if(type && type!=="FS") s+=type;
+  if(lag) s += (lag>0? "+"+lag : ""+lag);
+  return s;
+}
+function upsertToken(rawStr, id, type, lag){
+  var list = parsePredList(rawStr).filter(function(t){return !t.invalid;});
+  var found=false;
+  list = list.map(function(t){ if(t.id===id){found=true; return {id:id,type:type,lag:lag};} return t; });
+  if(!found) list.push({id:id,type:type,lag:lag});
+  return list.map(function(t){return serializeToken(t.id,t.type,t.lag);}).join(",");
+}
+function removeToken(rawStr, id){
+  var list = parsePredList(rawStr).filter(function(t){return !t.invalid && t.id!==id;});
+  return list.map(function(t){return serializeToken(t.id,t.type,t.lag);}).join(",");
+}
+function computeSuccessorsRaw(actId){
+  var out=[];
+  state.activities.forEach(function(other){
+    if(other.id===actId) return;
+    parsePredList(other.predecessors).forEach(function(p){
+      if(!p.invalid && p.id===actId) out.push({id:other.id,type:p.type,lag:p.lag});
+    });
+  });
+  return out.map(function(t){return serializeToken(t.id,t.type,t.lag);}).join(",");
+}
+function setSuccessorsForActivity(actId, newRaw){
+  var newList = parsePredList(newRaw).filter(function(t){return !t.invalid && t.id!==actId;});
+  var prevIds = [];
+  state.activities.forEach(function(a){
+    if(a.id===actId) return;
+    parsePredList(a.predecessors).forEach(function(p){ if(!p.invalid && p.id===actId) prevIds.push(a.id); });
+  });
+  var newIds = newList.map(function(t){return t.id;});
+  prevIds.filter(function(id){return newIds.indexOf(id)===-1;}).forEach(function(id){
+    var t = findActivity(id);
+    if(t) t.predecessors = removeToken(t.predecessors, actId);
+  });
+  newList.forEach(function(t){
+    var target = findActivity(t.id);
+    if(target) target.predecessors = upsertToken(target.predecessors, actId, t.type, t.lag);
+  });
+}
+
+/* ============================= Duration unit conversion ============================= */
+function toWorkDays(duration, unit){
+  var d = parseFloat(duration)||0;
+  switch(unit){
+    case "h": return d/8;
+    case "w": return d*5;
+    case "m": return d*20;
+    default: return d;
+  }
+}
+
+/* ============================= Calendar ============================= */
+function isWorkDay(d, cal){
+  if(!cal.workDays[d.getDay()]) return false;
+  if(cal.holidays.indexOf(dateISO(d))>-1) return false;
+  return true;
+}
+function offsetToDate(startISO, offset, cal){
+  var d = isoToDate(startISO);
+  var whole = Math.trunc(offset);
+  var remaining = whole;
+  while(remaining>0){ d.setDate(d.getDate()+1); if(isWorkDay(d,cal)) remaining--; }
+  while(remaining<0){ d.setDate(d.getDate()-1); if(isWorkDay(d,cal)) remaining++; }
+  return d;
+}
+function dateToOffset(startISO, targetISO, cal){
+  if(!targetISO) return 0;
+  var start = isoToDate(startISO), target = isoToDate(targetISO);
+  if(dateISO(start)===dateISO(target)) return 0;
+  var count=0, d=new Date(start);
+  if(target>start){
+    while(d<target){ d.setDate(d.getDate()+1); if(isWorkDay(d,cal)) count++; }
+  } else {
+    while(d>target){ d.setDate(d.getDate()-1); if(isWorkDay(d,cal)) count--; }
+  }
+  return count;
+}
+function isoToDate(iso){ var p=iso.split("-").map(Number); return new Date(p[0],p[1]-1,p[2]); }
+function dateISO(d){ return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate()); }
+function fmtShort(d){ var months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]; return months[d.getMonth()]+" "+d.getDate(); }
+function fmtDDMMMYY(d){
+  var months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  var dd = pad(d.getDate());
+  var yy = String(d.getFullYear()).slice(-2);
+  return dd+"-"+months[d.getMonth()]+"-"+yy;
+}
+var FULL_CAL = {workDays:[1,1,1,1,1,1,1], holidays:[]};
+/* pure calendar walk (never skips a day) — used for ruler/date-axis positions */
+function calDate(offset){ return offsetToDate(state.startDate, offset, FULL_CAL); }
+/* converts a WORKING-day offset (as produced by the CPM engine) into a real CALENDAR-day
+   offset from the project start — needed so a bar's pixel position (measured against a
+   plain calendar-day ruler) lines up with the same weekend/holiday-aware date shown in its
+   own Start/Finish text. */
+function calendarOffsetOf(workOffset){
+  var d = offsetToDate(state.startDate, workOffset, state.calendar);
+  return Math.round((d - isoToDate(state.startDate)) / 86400000);
+}
+function quarterOf(d){ return Math.floor(d.getMonth()/3)+1; }
+/* Groups a [calStart,calEnd) calendar-day range into contiguous bands for a given unit. */
+function buildBands(calStart, calEnd, unit){
+  var months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  var bands=[]; var cur=null;
+  for(var o=calStart; o<calEnd; o++){
+    var dt = calDate(o); var key, label;
+    if(unit==="week"){
+      var dow=dt.getDay(); var back=(dow===0)?6:(dow-1);
+      var monday=new Date(dt); monday.setDate(monday.getDate()-back);
+      key = monday.getFullYear()+"-"+monday.getMonth()+"-"+monday.getDate();
+      label = fmtDDMMMYY(monday);
+    } else if(unit==="month"){ key=dt.getFullYear()+"-"+dt.getMonth(); label=months[dt.getMonth()]; }
+    else if(unit==="quarter"){ key=dt.getFullYear()+"-"+quarterOf(dt); label="Q"+quarterOf(dt); }
+    else if(unit==="year"){ key=""+dt.getFullYear(); label=""+dt.getFullYear(); }
+    else { key=o; label=String(dt.getDate()); }
+    if(!cur || cur.key!==key){ if(cur) bands.push(cur); cur={key:key,label:label,offsetStart:o,offsetEnd:o+1,date:dt}; }
+    else cur.offsetEnd = o+1;
+  }
+  if(cur) bands.push(cur);
+  return bands;
+}
+
+/* ============================= CPM ENGINE ============================= */
+var schedule = { tasks:{}, summaries:{}, error:null, projectSpanDays:0, openCount:0 };
+
+function computeSchedule(){
+  var all = state.activities;
+  var cal = state.calendar;
+  var summaryFlags = {};
+  all.forEach(function(a){ summaryFlags[a.id] = isSummary(a, all); });
+
+  var tasks = all.filter(function(a){ return !summaryFlags[a.id]; });
+  var byId = {};
+  tasks.forEach(function(t){ byId[t.id]=t; });
+
+  var errors = [];
+  var predMap = {}, succMap = {};
+  tasks.forEach(function(t){ predMap[t.id]=[]; succMap[t.id]=[]; });
+
+  tasks.forEach(function(t){
+    if(t.type==="event") return; // events are fixed-date, predecessors ignored
+    var list = parsePredList(t.predecessors);
+    list.forEach(function(p){
+      if(p.invalid){ errors.push('Activity '+t.id+': cannot read predecessor "'+p.raw+'"'); return; }
+      if(p.id===t.id){ errors.push('Activity '+t.id+': cannot depend on itself'); return; }
+      if(!byId[p.id]){ errors.push('Activity '+t.id+': predecessor "'+p.id+'" not found (it may be a summary WBS row)'); return; }
+      predMap[t.id].push(p);
+      succMap[p.id].push({id:t.id, type:p.type, lag:p.lag});
+    });
+  });
+
+  if(errors.length){ schedule = {tasks:{}, summaries:{}, error:errors, projectSpanDays:0, openCount:0}; return; }
+
+  var indeg = {}; tasks.forEach(function(t){ indeg[t.id]=predMap[t.id].length; });
+  var queue = tasks.filter(function(t){ return indeg[t.id]===0; }).map(function(t){return t.id;});
+  var order = [];
+  var indegCopy = Object.assign({}, indeg);
+  while(queue.length){
+    var id = queue.shift();
+    order.push(id);
+    succMap[id].forEach(function(s){ indegCopy[s.id]--; if(indegCopy[s.id]===0) queue.push(s.id); });
+  }
+  if(order.length !== tasks.length){
+    var involved = tasks.filter(function(t){return indegCopy[t.id]>0;}).map(function(t){return t.id;});
+    schedule = {tasks:{}, summaries:{}, error:["Circular dependency detected among: "+involved.join(", ")], projectSpanDays:0, openCount:0};
+    return;
+  }
+
+  var ES={}, EF={};
+  order.forEach(function(id){
+    var t = byId[id];
+    var dur = t.type==="milestone" ? 0 : toWorkDays(t.duration, t.durationUnit);
+    if(t.type==="event"){
+      var es = dateToOffset(state.startDate, t.fixedDate || state.startDate, cal);
+      ES[id]=es; EF[id]=es+dur;
+      return;
+    }
+    var es2 = 0;
+    predMap[id].forEach(function(p){
+      var pES=ES[p.id], pEF=EF[p.id]; var cand;
+      if(p.type==="FS") cand = pEF + p.lag;
+      else if(p.type==="SS") cand = pES + p.lag;
+      else if(p.type==="FF") cand = (pEF + p.lag) - dur;
+      else if(p.type==="SF") cand = (pES + p.lag) - dur;
+      else cand = pEF + p.lag;
+      if(cand>es2) es2=cand;
+    });
+    ES[id]=es2; EF[id]=es2+dur;
+  });
+
+  var projFinish = 0;
+  tasks.forEach(function(t){ if(EF[t.id]>projFinish) projFinish=EF[t.id]; });
+
+  var LF={}, LS={};
+  order.slice().reverse().forEach(function(id){
+    var t = byId[id];
+    var dur = t.type==="milestone" ? 0 : toWorkDays(t.duration, t.durationUnit);
+    var succs = succMap[id];
+    var lf;
+    if(succs.length===0){ lf = projFinish; }
+    else{
+      lf = Infinity;
+      succs.forEach(function(s){
+        var sLS=LS[s.id], sLF=LF[s.id]; var cand;
+        if(s.type==="FS") cand = sLS - s.lag;
+        else if(s.type==="SS") cand = (sLS - s.lag) + dur;
+        else if(s.type==="FF") cand = sLF - s.lag;
+        else if(s.type==="SF") cand = (sLF - s.lag) + dur;
+        else cand = sLS - s.lag;
+        if(cand<lf) lf=cand;
+      });
+      if(lf===Infinity) lf = projFinish;
+    }
+    LF[id]=lf; LS[id]=lf-dur;
+  });
+
+  var taskResults = {}; var openCount=0;
+  tasks.forEach(function(t){
+    var dur = t.type==="milestone" ? 0 : toWorkDays(t.duration, t.durationUnit);
+    var float = LS[t.id]-ES[t.id];
+    var openStart = t.type!=="event" && predMap[t.id].length===0;
+    var openFinish = succMap[t.id].length===0;
+    if(t.type!=="event" && (openStart||openFinish)) openCount++;
+    taskResults[t.id] = {
+      id:t.id, es:ES[t.id], ef:EF[t.id], ls:LS[t.id], lf:LF[t.id],
+      float: Math.round(float*100)/100, critical: float<=0.0001, duration: dur,
+      openStart: openStart, openFinish: openFinish
+    };
+  });
+
+  var summaries = {};
+  all.filter(function(a){ return summaryFlags[a.id]; }).forEach(function(s){
+    var prefix = s.wbs + ".";
+    var kids = all.filter(function(a){ return a.wbs.indexOf(prefix)===0; }).map(function(a){return a.id;});
+    var minES=null, maxEF=null, anyCrit=false;
+    kids.forEach(function(kid){
+      var r = taskResults[kid];
+      if(!r) return;
+      if(minES===null || r.es<minES) minES=r.es;
+      if(maxEF===null || r.ef>maxEF) maxEF=r.ef;
+      if(r.critical) anyCrit=true;
+    });
+    if(minES!==null) summaries[s.id] = {id:s.id, es:minES, ef:maxEF, critical:anyCrit};
+  });
+
+  schedule = {tasks: taskResults, summaries: summaries, error:null, projectSpanDays: projFinish, openCount: openCount};
+}
+
+/* ============================= RENDER ============================= */
+function q(id){ return document.getElementById(id); }
+
+function syncTopFields(){
+  q("projName").value = state.projectName;
+  q("projStart").value = state.startDate;
+  renderCalendarModal();
+}
+
+/* ---------- Resizable columns ---------- */
+function applyColWidths(){
+  var css = "";
+  var total = 26; // del column
+  Object.keys(COL_CLASS).forEach(function(k){
+    var w = state.colWidths[k] || DEFAULT_COL_WIDTHS[k];
+    css += "."+COL_CLASS[k]+"{width:"+w+"px !important; flex:none !important;}\n";
+    total += w;
+  });
+  total += 52; // float column (fixed, not resizable)
+  css += ".table-head-row,.row{min-width:"+total+"px;}\n";
+  var styleEl = q("colWidthStyle");
+  if(!styleEl){ styleEl=document.createElement("style"); styleEl.id="colWidthStyle"; document.head.appendChild(styleEl); }
+  styleEl.textContent = css;
+}
+function wireColumnResize(){
+  document.querySelectorAll(".col-resize-handle").forEach(function(handle){
+    handle.addEventListener("mousedown", function(e){
+      e.preventDefault(); e.stopPropagation();
+      var col = handle.dataset.col;
+      var startX = e.clientX;
+      var startW = state.colWidths[col] || DEFAULT_COL_WIDTHS[col];
+      handle.classList.add("active");
+      function onMove(ev){
+        var dx = ev.clientX - startX;
+        state.colWidths[col] = Math.max(30, startW + dx);
+        applyColWidths();
+      }
+      function onUp(){
+        document.removeEventListener("mousemove", onMove);
+        document.removeEventListener("mouseup", onUp);
+        handle.classList.remove("active");
+        saveLocal();
+      }
+      document.addEventListener("mousemove", onMove);
+      document.addEventListener("mouseup", onUp);
+    });
+  });
+}
+
+/* Full structural rebuild: only on add/delete/reorder/load */
+function renderTableStructure(){
+  var all = sortedActivities();
+  var body = q("tableBody");
+  body.innerHTML = "";
+  all.forEach(function(a){ body.appendChild(buildRow(a)); });
+  patchTable();
+}
+
+function buildRow(a){
+  var summary = isSummary(a, state.activities);
+  var level = wbsLevel(a.wbs);
+  var indent = (level-1)*14;
+  var row = document.createElement("div");
+  row.className = "row";
+  row.dataset.id = a.id;
+
+  var typeOptions = ["task","milestone","event"].map(function(v){
+    var label = v==="task"?"Task Dependent":v==="milestone"?"Milestone":"Event (fixed date)";
+    return '<option value="'+v+'"'+(a.type===v?" selected":"")+'>'+label+'</option>';
+  }).join("");
+  var unitOptions = ["h","d","w","m"].map(function(v){
+    return '<option value="'+v+'"'+(a.durationUnit===v?" selected":"")+'>'+v+'</option>';
+  }).join("");
+
+  row.innerHTML =
+    '<div class="col-del"><button class="delbtn" data-act="del" tabindex="-1">×</button></div>' +
+    '<div class="col-wbs"><input class="mono" data-f="wbs" value="'+esc(a.wbs)+'"></div>' +
+    '<div class="col-id mono">'+a.id+'<span class="badge badge-open hidden" data-el="openBadge">!</span></div>' +
+    '<div class="col-type"><select data-f="type">'+typeOptions+'</select></div>' +
+    '<div class="col-name" style="padding-left:'+(6+indent)+'px"><input data-f="name" value="'+esc(a.name)+'"></div>' +
+    '<div class="col-dur"><input class="mono" data-f="duration" type="number" min="0" step="0.5" value="'+(a.type==="milestone"?0:a.duration)+'"></div>' +
+    '<div class="col-durunit"><select data-f="durationUnit">'+unitOptions+'</select></div>' +
+    '<div class="col-qty"><input class="mono" data-f="qty" value="'+esc(a.qty)+'"></div>' +
+    '<div class="col-unit"><input class="mono" data-f="unit" value="'+esc(a.unit)+'"></div>' +
+    '<div class="col-pred"><input class="mono" data-f="predecessors" value="'+esc(a.predecessors)+'" placeholder="e.g. A2FS+1"></div>' +
+    '<div class="col-succ"><input class="mono" data-f="successors" value="'+esc(computeSuccessorsRaw(a.id))+'" placeholder="e.g. A5"></div>' +
+    '<div class="col-start"><span class="mono" data-el="startComputed"></span><input type="date" class="mono hidden" data-f="fixedDate" value="'+esc(a.fixedDate)+'"></div>' +
+    '<div class="col-finish"><span class="mono" data-el="finishComputed"></span></div>' +
+    '<div class="col-float"><span class="float-val" data-el="floatVal"></span></div>';
+
+  return row;
+}
+
+function esc(s){
+  s = (s===undefined||s===null) ? "" : String(s);
+  return s.replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;");
+}
+
+/* Light patch: updates computed cells + non-focused derived inputs, without touching DOM structure (keeps focus/cursor intact) */
+function patchTable(){
+  var active = document.activeElement;
+  document.querySelectorAll("#tableBody .row").forEach(function(row){
+    var id = row.dataset.id;
+    var a = findActivity(id);
+    if(!a) return;
+    var summary = isSummary(a, state.activities);
+    var res = summary ? schedule.summaries[a.id] : schedule.tasks[a.id];
+
+    row.className = "row" + (res && res.critical ? " critical" : "") + (summary ? " summary-row" : "");
+
+    // type select
+    var typeSel = row.querySelector('[data-f="type"]');
+    if(typeSel && typeSel!==active) typeSel.value = a.type;
+    typeSel.disabled = summary;
+
+    // duration & unit
+    var durInput = row.querySelector('[data-f="duration"]');
+    if(durInput && durInput!==active) durInput.value = a.type==="milestone" ? 0 : a.duration;
+    durInput.disabled = summary || a.type==="milestone";
+    var durUnitSel = row.querySelector('[data-f="durationUnit"]');
+    if(durUnitSel && durUnitSel!==active) durUnitSel.value = a.durationUnit;
+    durUnitSel.disabled = summary || a.type==="milestone";
+
+    // qty/unit
+    var qtyInput = row.querySelector('[data-f="qty"]'); qtyInput.disabled = summary;
+    var unitInput = row.querySelector('[data-f="unit"]'); unitInput.disabled = summary;
+
+    // predecessors
+    var predInput = row.querySelector('[data-f="predecessors"]');
+    predInput.disabled = summary || a.type==="event";
+    if(predInput!==active) predInput.value = a.predecessors;
+
+    // successors (derived from others; refresh unless focused)
+    var succInput = row.querySelector('[data-f="successors"]');
+    succInput.disabled = summary;
+    if(succInput!==active) succInput.value = computeSuccessorsRaw(a.id);
+
+    // start cell: fixed-date input for events, computed span otherwise
+    var startSpan = row.querySelector('[data-el="startComputed"]');
+    var fixedDateInput = row.querySelector('[data-f="fixedDate"]');
+    var finishSpan = row.querySelector('[data-el="finishComputed"]');
+    var floatSpan = row.querySelector('[data-el="floatVal"]');
+
+    if(a.type==="event" && !summary){
+      startSpan.classList.add("hidden");
+      fixedDateInput.classList.remove("hidden");
+      if(fixedDateInput!==active) fixedDateInput.value = a.fixedDate || "";
+    } else {
+      startSpan.classList.remove("hidden");
+      fixedDateInput.classList.add("hidden");
+    }
+
+    if(!schedule.error && res){
+      var sd = offsetToDate(state.startDate, res.es, state.calendar);
+      var fd = offsetToDate(state.startDate, Math.max(res.es, res.ef-1), state.calendar);
+      startSpan.textContent = fmtDDMMMYY(sd);
+      finishSpan.textContent = fmtDDMMMYY(fd);
+    } else {
+      startSpan.textContent = "";
+      finishSpan.textContent = "";
+    }
+
+    if(!summary && !schedule.error && schedule.tasks[a.id]){
+      var tr = schedule.tasks[a.id];
+      if(a.type==="event"){ floatSpan.textContent = "fixed"; floatSpan.className="float-val"; }
+      else {
+        floatSpan.textContent = tr.float + "d";
+        floatSpan.className = "float-val" + (tr.critical ? " crit" : "");
+      }
+    } else {
+      floatSpan.textContent = "";
+    }
+
+    // open badge
+    var openBadge = row.querySelector('[data-el="openBadge"]');
+    if(!summary && !schedule.error && schedule.tasks[a.id] && a.type!=="event" && (schedule.tasks[a.id].openStart || schedule.tasks[a.id].openFinish)){
+      openBadge.classList.remove("hidden");
+      var msgs=[];
+      if(schedule.tasks[a.id].openStart) msgs.push("no predecessor (open start)");
+      if(schedule.tasks[a.id].openFinish) msgs.push("no successor (open finish)");
+      openBadge.title = "Open activity: " + msgs.join(", ");
+    } else {
+      openBadge.classList.add("hidden");
+    }
+  });
+}
+
+/* ---------- Timeline / Gantt (safe to fully redraw, no editable inputs inside) ---------- */
+function renderTimeline(){
+  var dw = state.dayWidth;
+  var span = Math.max(schedule.error?10:calendarOffsetOf(schedule.projectSpanDays), 10) + 4;
+  var headerInner = q("timelineHeaderInner");
+  var bodyInner = q("timelineBodyInner");
+  headerInner.innerHTML = "";
+  bodyInner.innerHTML = '';
+  headerInner.style.width = (span*dw)+"px";
+  bodyInner.style.width = (span*dw)+"px";
+
+  var cal = state.calendar;
+  var lastMonth = null;
+  for(var i=0;i<span;i++){
+    var d = calDate(i); // pure calendar walk for display grid
+    var isWeekend = !cal.workDays[d.getDay()];
+    var isHoliday = cal.holidays.indexOf(dateISO(d))>-1;
+    var tick = document.createElement("div");
+    tick.className = "tl-day" + (isHoliday?" holiday":(isWeekend?" weekend":""));
+    tick.style.left = (i*dw)+"px"; tick.style.width = dw+"px";
+    if(dw>=16) tick.textContent = d.getDate();
+    headerInner.appendChild(tick);
+
+    var monthKey = d.getFullYear()+"-"+d.getMonth();
+    if(monthKey!==lastMonth){
+      lastMonth = monthKey;
+      var mo = document.createElement("div");
+      mo.className = "tl-month"; mo.style.left = (i*dw)+"px";
+      var months=["January","February","March","April","May","June","July","August","September","October","November","December"];
+      mo.textContent = months[d.getMonth()]+" "+d.getFullYear();
+      headerInner.appendChild(mo);
+    }
+  }
+
+  var all = sortedActivities();
+  var rowH = 34;
+
+  var bgWrap = document.createElement("div");
+  bgWrap.style.position="absolute"; bgWrap.style.top="0"; bgWrap.style.left="0"; bgWrap.style.right="0";
+  for(var wi=0; wi<span; wi++){
+    var wd = calDate(wi);
+    var wIsHoliday = cal.holidays.indexOf(dateISO(wd))>-1;
+    var wIsWeekend = !cal.workDays[wd.getDay()];
+    if(wIsHoliday || wIsWeekend){
+      var col = document.createElement("div");
+      col.className = wIsHoliday ? "tl-holiday-col" : "tl-weekend-col";
+      col.style.left=(wi*dw)+"px"; col.style.width=dw+"px"; col.style.height=(all.length*rowH)+"px";
+      bgWrap.appendChild(col);
+    }
+  }
+  bodyInner.appendChild(bgWrap);
+  bodyInner.style.position="relative";
+  bodyInner.style.minHeight = (all.length*rowH+10)+"px";
+
+  all.forEach(function(a, idx){
+    var summary = isSummary(a, state.activities);
+    var res = summary ? schedule.summaries[a.id] : schedule.tasks[a.id];
+    var rowBg = document.createElement("div");
+    rowBg.className = "tl-row-bg" + (summary?" summary-bg":"");
+    rowBg.style.top = (idx*rowH)+"px"; rowBg.style.width = (span*dw)+"px";
+    bodyInner.appendChild(rowBg);
+
+    if(schedule.error || !res) return;
+
+    var esCal = calendarOffsetOf(res.es);
+    var efCal = a.type==="milestone" ? esCal : calendarOffsetOf(Math.max(res.ef, res.es+0.001));
+    var x1 = esCal*dw, x2 = Math.max(efCal, esCal+0.001)*dw;
+    var yTop = idx*rowH;
+
+    var bar = document.createElement("div");
+    if(a.type==="milestone"){
+      bar.className = "bar milestone" + (res.critical?" critical":"");
+      bar.style.left = (x1-9)+"px"; bar.style.top = (yTop+7)+"px";
+      bar.innerHTML = '<div class="diamond"></div><span class="bar-label">'+esc(a.name)+'</span>';
+    } else if(summary){
+      bar.className = "bar summary-bar";
+      bar.style.left = x1+"px"; bar.style.width = Math.max(x2-x1,4)+"px"; bar.style.top = (yTop+12)+"px";
+      bar.innerHTML = '<span class="bar-label" style="left:0;top:14px;position:absolute;">'+esc(a.name)+'</span>';
+    } else {
+      bar.className = "bar" + (a.type==="event"?" event":"") + (res.critical?" critical":"");
+      bar.style.left = x1+"px"; bar.style.width = Math.max(x2-x1,6)+"px"; bar.style.top = (yTop+7)+"px";
+      var qtyTxt = a.qty ? (' · '+esc(a.qty)+esc(a.unit?(' '+a.unit):'')) : '';
+      bar.title = a.name + " — " + a.duration + a.durationUnit + qtyTxt;
+      var lbl = document.createElement("span");
+      lbl.className = "bar-label";
+      lbl.textContent = a.name;
+      bar.appendChild(lbl);
+    }
+    bodyInner.appendChild(bar);
+  });
+}
+
+function renderErrorBanner(){
+  var el = q("errorBanner");
+  if(schedule.error && schedule.error.length){ el.style.display="block"; el.textContent = "⚠ " + schedule.error.join("   •   "); }
+  else el.style.display = "none";
+}
+function renderWarnBanner(){
+  var el = q("warnBanner");
+  if(!schedule.error && schedule.openCount>0){
+    el.style.display="block";
+    el.textContent = "⚠ "+schedule.openCount+" open-ended activit"+(schedule.openCount===1?"y":"ies")+" (missing predecessor and/or successor) — check the ! badges in the ID column.";
+  } else el.style.display="none";
+}
+function renderStatusBar(){
+  var el = q("statusBar");
+  if(schedule.error){ el.innerHTML = '<span>Fix predecessor errors above to compute the schedule.</span>'; return; }
+  var finishDate = offsetToDate(state.startDate, Math.max(0,schedule.projectSpanDays-1), state.calendar);
+  var critCount = Object.values(schedule.tasks).filter(function(t){return t.critical;}).length;
+  var totalTasks = Object.keys(schedule.tasks).length;
+  el.innerHTML =
+    '<span><span class="crit-dot"></span><b>'+critCount+'</b> critical of '+totalTasks+' activities</span>' +
+    '<span>Duration: <b>'+Math.round(schedule.projectSpanDays*100)/100+'</b> working day'+(schedule.projectSpanDays===1?'':'s')+'</span>' +
+    '<span>Finish: <b>'+fmtDDMMMYY(finishDate)+'</b></span>' +
+    (schedule.openCount>0 ? '<span><span class="warn-dot"></span><b>'+schedule.openCount+'</b> open-ended</span>' : '');
+}
+
+/* recompute + light patch (used on every keystroke — never rebuilds inputs, so focus/cursor is preserved) */
+function recalcLight(){
+  computeSchedule();
+  renderErrorBanner();
+  renderWarnBanner();
+  patchTable();
+  renderTimeline();
+  renderStatusBar();
+  saveLocal();
+}
+/* full rebuild (used on add/delete/reorder/load/new) */
+function recalcFull(){
+  computeSchedule();
+  renderErrorBanner();
+  renderWarnBanner();
+  renderTableStructure();
+  renderTimeline();
+  renderStatusBar();
+  saveLocal();
+}
+
+/* ============================= EVENTS ============================= */
+q("tableBody").addEventListener("input", function(e){
+  var t = e.target;
+  var row = t.closest(".row");
+  if(!row) return;
+  var id = row.dataset.id;
+  var act = findActivity(id);
+  if(!act) return;
+  var f = t.dataset.f;
+  if(!f) return;
+
+  if(f==="successors"){ setSuccessorsForActivity(id, t.value); }
+  else if(f==="duration"){ act.duration = parseFloat(t.value)||0; }
+  else { act[f] = t.value; }
+
+  recalcLight();
+});
+
+q("tableBody").addEventListener("change", function(e){
+  var t = e.target;
+  if(t.dataset.f==="wbs"){
+    recalcFull(); // reordering / summary status may have changed
+  } else if(t.dataset.f==="type" || t.dataset.f==="durationUnit"){
+    var row = t.closest(".row");
+    var act = findActivity(row.dataset.id);
+    if(act && t.dataset.f==="type" && t.value==="event" && !act.fixedDate) act.fixedDate = state.startDate;
+    recalcLight();
+  }
+});
+
+q("tableBody").addEventListener("click", function(e){
+  if(e.target.dataset.act==="del"){
+    var row = e.target.closest(".row");
+    var id = row.dataset.id;
+    state.activities = state.activities.filter(function(a){return a.id!==id;});
+    // also strip this id from anyone's predecessor list
+    state.activities.forEach(function(a){ a.predecessors = removeToken(a.predecessors, id); });
+    recalcFull();
+  }
+});
+
+function addActivityAtEnd(){
+  var topLevels = state.activities.filter(function(a){ return a.wbs.indexOf(".")===-1; });
+  var maxTop = 0;
+  topLevels.forEach(function(a){ var n=parseInt(a.wbs,10); if(!isNaN(n)&&n>maxTop) maxTop=n; });
+  var a = newActivity({wbs: String(maxTop+1)});
+  state.activities.push(a);
+  recalcFull();
+  setTimeout(function(){
+    var el = document.querySelector('.row[data-id="'+a.id+'"] .col-name input');
+    if(el){ el.focus(); el.select(); }
+  }, 30);
+}
+q("btnAdd").addEventListener("click", addActivityAtEnd);
+q("btnAdd2").addEventListener("click", addActivityAtEnd);
+
+q("btnDemo").addEventListener("click", function(){
+  if(state.activities.length && !confirm("Replace current activities with the example project?")) return;
+  loadDemo();
+});
+q("btnNew").addEventListener("click", function(){
+  if(!confirm("Start a new blank project? Unsaved changes will be lost (use Save .json first if needed).")) return;
+  state.activities = []; state.nextSeq = 1; state.projectName = "New Project"; state.startDate = todayISO();
+  state.calendar = { workDays:[false,true,true,true,true,true,false], holidays:[] };
+  syncTopFields(); recalcFull();
+});
+
+q("projName").addEventListener("input", function(e){ state.projectName=e.target.value; saveLocal(); });
+q("projStart").addEventListener("change", function(e){ state.startDate=e.target.value || todayISO(); recalcLight(); });
+
+q("zoomIn").addEventListener("click", function(){ state.dayWidth = Math.min(48, state.dayWidth+6); renderTimeline(); });
+q("zoomOut").addEventListener("click", function(){ state.dayWidth = Math.max(6, state.dayWidth-6); renderTimeline(); });
+
+/* ---------- Calendar modal ---------- */
+function renderCalendarModal(){
+  var dowNames = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  var grid = q("dowGrid");
+  grid.innerHTML = dowNames.map(function(name,i){
+    return '<label class="dow-chip"><input type="checkbox" data-dow="'+i+'" '+(state.calendar.workDays[i]?"checked":"")+'>'+name+'</label>';
+  }).join("");
+  grid.querySelectorAll('input[type=checkbox]').forEach(function(cb){
+    cb.addEventListener("change", function(){
+      state.calendar.workDays[parseInt(cb.dataset.dow,10)] = cb.checked;
+      recalcLight();
+    });
+  });
+  renderHolidayList();
+}
+function renderHolidayList(){
+  var list = q("holidayList");
+  var sorted = state.calendar.holidays.slice().sort();
+  if(sorted.length===0){ list.innerHTML = '<div style="font-size:12px;color:var(--ink-soft);">No holidays added.</div>'; return; }
+  list.innerHTML = sorted.map(function(h){
+    return '<div class="holiday-item"><span class="mono">'+h+'</span><button data-del-hol="'+h+'">✕</button></div>';
+  }).join("");
+  list.querySelectorAll('[data-del-hol]').forEach(function(btn){
+    btn.addEventListener("click", function(){
+      var v = btn.dataset.delHol;
+      state.calendar.holidays = state.calendar.holidays.filter(function(h){return h!==v;});
+      renderHolidayList();
+      recalcLight();
+    });
+  });
+}
+q("btnCalendar").addEventListener("click", function(){ renderCalendarModal(); q("calModal").classList.add("open"); });
+q("calClose").addEventListener("click", function(){ q("calModal").classList.remove("open"); });
+q("calDone").addEventListener("click", function(){ q("calModal").classList.remove("open"); });
+q("calModal").addEventListener("click", function(e){ if(e.target.id==="calModal") q("calModal").classList.remove("open"); });
+q("holAdd").addEventListener("click", function(){
+  var d = q("holDate").value;
+  if(!d) return;
+  if(state.calendar.holidays.indexOf(d)===-1) state.calendar.holidays.push(d);
+  q("holDate").value = ""; q("holLabel").value = "";
+  renderHolidayList();
+  recalcLight();
+});
+
+/* scroll sync (vertical only; horizontal scroll of table is native via table-pane overflow-x) */
+var tBody = q("tableBody"), tlBodyWrap = q("timelineBodyWrap"), tlHeaderWrap = q("timelineHeaderWrap");
+var syncing = false;
+tBody.addEventListener("scroll", function(){ if(syncing) return; syncing=true; tlBodyWrap.scrollTop = tBody.scrollTop; syncing=false; });
+tlBodyWrap.addEventListener("scroll", function(){
+  if(syncing) return; syncing=true;
+  tBody.scrollTop = tlBodyWrap.scrollTop;
+  tlHeaderWrap.scrollLeft = tlBodyWrap.scrollLeft;
+  syncing=false;
+});
+
+/* ============================= EXPORT / IMPORT ============================= */
+q("btnCsv").addEventListener("click", function(){
+  var all = sortedActivities();
+  var rows = [["WBS","ID","Type","Activity","Duration","Unit","Qty","UOM","Predecessors","Successors","Start","Finish","Total Float(d)","Critical","Open Flag"]];
+  all.forEach(function(a){
+    var summary = isSummary(a, state.activities);
+    var res = summary ? schedule.summaries[a.id] : schedule.tasks[a.id];
+    var startTxt="", finishTxt="", floatTxt="", critTxt="", openTxt="";
+    if(res && !schedule.error){
+      var sd = offsetToDate(state.startDate, res.es, state.calendar);
+      var fd = offsetToDate(state.startDate, Math.max(res.es,res.ef-1), state.calendar);
+      startTxt = fmtDDMMMYY(sd); finishTxt = fmtDDMMMYY(fd);
+      if(!summary){
+        floatTxt = a.type==="event" ? "fixed" : schedule.tasks[a.id].float;
+        critTxt = schedule.tasks[a.id].critical ? "Y" : "N";
+        var flags=[]; if(schedule.tasks[a.id].openStart) flags.push("open-start"); if(schedule.tasks[a.id].openFinish) flags.push("open-finish");
+        openTxt = flags.join("/");
+      }
+    }
+    rows.push([a.wbs,a.id,a.type,a.name,a.type==="milestone"?0:a.duration,a.durationUnit,a.qty,a.unit,a.predecessors,computeSuccessorsRaw(a.id),startTxt,finishTxt,floatTxt,critTxt,openTxt]);
+  });
+  var csv = rows.map(function(r){
+    return r.map(function(v){
+      v = (v===undefined||v===null)?"":String(v);
+      if(v.indexOf(",")>-1 || v.indexOf('"')>-1) v = '"'+v.replace(/"/g,'""')+'"';
+      return v;
+    }).join(",");
+  }).join("\n");
+  downloadBlob(csv, (state.projectName||"schedule").replace(/[^\w\-]+/g,"_")+".csv", "text/csv");
+});
+
+/* ---------- Print / PDF ---------- */
+var PRINT_COL_DEFS = [
+  {key:"wbs", label:"WBS", def:true},
+  {key:"id", label:"ID", def:true},
+  {key:"type", label:"Type", def:false},
+  {key:"duration", label:"Duration", def:true},
+  {key:"qty", label:"Qty / UOM", def:true},
+  {key:"pred", label:"Predecessors", def:false},
+  {key:"succ", label:"Successors", def:false},
+  {key:"start", label:"Start", def:true},
+  {key:"finish", label:"Finish", def:true},
+  {key:"float", label:"Float", def:true}
+];
+function renderPrintColGrid(){
+  var grid = q("printColGrid");
+  grid.innerHTML = PRINT_COL_DEFS.map(function(c){
+    return '<label><input type="checkbox" data-pcol="'+c.key+'" '+(c.def?"checked":"")+'>'+c.label+'</label>';
+  }).join("");
+}
+function updatePrintModeUI(){
+  var mode = document.querySelector('input[name="printMode"]:checked').value;
+  var note = q("printColNote");
+  var tsSection = q("printTimescaleSection");
+  if(mode==="table"){
+    q("printColSection").style.display = "";
+    tsSection.style.display = "none";
+    note.style.display = "block";
+    note.textContent = "A plain multi-column table. Column headers repeat automatically on every printed page.";
+  } else if(mode==="gantt"){
+    q("printColSection").style.display = "none";
+    tsSection.style.display = "";
+    note.style.display = "block";
+    note.textContent = "Full-width Gantt chart (WBS / ID / Activity / Duration identify each row). Continues onto further pages, left to right and top to bottom, exactly like P6.";
+  } else {
+    q("printColSection").style.display = "";
+    tsSection.style.display = "";
+    note.style.display = "block";
+    note.textContent = "The columns you tick appear frozen beside the Gantt bars on every page; the chart continues onto further pages as needed.";
+  }
+}
+document.querySelectorAll('input[name="printMode"]').forEach(function(r){ r.addEventListener("change", updatePrintModeUI); });
+
+q("btnPrint").addEventListener("click", function(){
+  renderPrintColGrid();
+  updatePrintModeUI();
+  q("printModal").classList.add("open");
+});
+q("printClose").addEventListener("click", function(){ q("printModal").classList.remove("open"); });
+q("printCancel").addEventListener("click", function(){ q("printModal").classList.remove("open"); });
+q("printModal").addEventListener("click", function(e){ if(e.target.id==="printModal") q("printModal").classList.remove("open"); });
+
+q("printGo").addEventListener("click", function(){
+  var mode = document.querySelector('input[name="printMode"]:checked').value;
+  var cols = {};
+  document.querySelectorAll('[data-pcol]').forEach(function(cb){ cols[cb.dataset.pcol] = cb.checked; });
+  var timescale = q("printTimescaleSel").value;
+  buildPrintContent(mode, cols, timescale);
+  q("printModal").classList.remove("open");
+  setTimeout(function(){ window.print(); }, 60);
+});
+
+function fmtDurationText(a){
+  return (a.type==="milestone"?0:a.duration) + a.durationUnit;
+}
+
+/* ---------- Paginated print engine (P6-style: frozen ID columns repeat on every page,
+   the date scale continues right then down across as many physical pages as needed) ---------- */
+var PRINT_PAGE_W = 950;   // usable content width per printed landscape page, px
+var PRINT_PAGE_H = 640;   // usable content height per printed page, px (leaves room for the page header)
+var PRINT_ROW_H = 18;
+var PRINT_ROWS_PER_PAGE = 30;
+var PRINT_TIMESCALES = {
+  day:     { dayWidth:24, headH:40 },
+  week:    { dayWidth:7,  headH:28 },
+  month:   { dayWidth:2.1,headH:28 },
+  quarter: { dayWidth:0.9,headH:28 },
+  year:    { dayWidth:0.35,headH:16 }
+};
+var PRINT_COL_PX = { wbs:34, id:30, type:56, duration:38, qty:54, pred:60, succ:60, start:56, finish:56, float:36 };
+var PRINT_NAME_W = 140;
+
+function buildPrintContent(mode, cols, timescale){
+  var container = q("printArea");
+  container.innerHTML = "";
+  if(mode==="table"){
+    var title = document.createElement("div");
+    title.className = "print-title";
+    title.textContent = state.projectName || "Untitled Project";
+    var meta = document.createElement("div");
+    meta.className = "print-meta";
+    var finishDate = !schedule.error ? offsetToDate(state.startDate, Math.max(0,schedule.projectSpanDays-1), state.calendar) : null;
+    meta.textContent = "Start: " + fmtDDMMMYY(isoToDate(state.startDate)) + (finishDate ? "   ·   Finish: " + fmtDDMMMYY(finishDate) : "") + "   ·   Printed " + fmtDDMMMYY(new Date());
+    container.appendChild(title);
+    container.appendChild(meta);
+    container.appendChild(buildPrintTable(cols));
+  } else {
+    container.appendChild(buildPrintPaged(mode, cols, timescale));
+  }
+}
+
+function buildPrintTable(cols){
+  var all = sortedActivities();
+  var table = document.createElement("table");
+  table.className = "print-table";
+  var thead = document.createElement("thead");
+  var htr = document.createElement("tr");
+  var headers = [];
+  if(cols.wbs) headers.push("WBS");
+  if(cols.id) headers.push("ID");
+  if(cols.type) headers.push("Type");
+  headers.push("Activity");
+  if(cols.duration) headers.push("Duration");
+  if(cols.qty) headers.push("Qty / UOM");
+  if(cols.pred) headers.push("Predecessors");
+  if(cols.succ) headers.push("Successors");
+  if(cols.start) headers.push("Start");
+  if(cols.finish) headers.push("Finish");
+  if(cols.float) headers.push("Float");
+  headers.forEach(function(h){ var th=document.createElement("th"); th.textContent=h; htr.appendChild(th); });
+  thead.appendChild(htr); table.appendChild(thead);
+
+  var tbody = document.createElement("tbody");
+  all.forEach(function(a){
+    var summary = isSummary(a, state.activities);
+    var res = summary ? schedule.summaries[a.id] : schedule.tasks[a.id];
+    var tr = document.createElement("tr");
+    if(summary) tr.className = "summary";
+    var cells = [];
+    if(cols.wbs) cells.push({t:a.wbs});
+    if(cols.id) cells.push({t:a.id});
+    if(cols.type) cells.push({t: summary?"Summary":(a.type==="milestone"?"Milestone":a.type==="event"?"Event":"Task")});
+    cells.push({t:a.name});
+    if(cols.duration) cells.push({t: summary?"":fmtDurationText(a)});
+    if(cols.qty) cells.push({t: summary?"":[a.qty,a.unit].filter(Boolean).join(" ")});
+    if(cols.pred) cells.push({t: summary?"":a.predecessors});
+    if(cols.succ) cells.push({t: summary?"":computeSuccessorsRaw(a.id)});
+    var startTxt="", finishTxt="", floatTxt="", crit=false;
+    if(res && !schedule.error){
+      startTxt = fmtDDMMMYY(offsetToDate(state.startDate, res.es, state.calendar));
+      finishTxt = fmtDDMMMYY(offsetToDate(state.startDate, Math.max(res.es,res.ef-1), state.calendar));
+      if(!summary){ floatTxt = a.type==="event" ? "fixed" : (schedule.tasks[a.id].float+"d"); crit = schedule.tasks[a.id].critical; }
+    }
+    if(cols.start) cells.push({t:startTxt});
+    if(cols.finish) cells.push({t:finishTxt});
+    if(cols.float) cells.push({t:floatTxt, crit:crit});
+    cells.forEach(function(c){ var td=document.createElement("td"); if(c.crit) td.className="crit"; td.textContent=c.t; tr.appendChild(td); });
+    tbody.appendChild(tr);
+  });
+  table.appendChild(tbody);
+  return table;
+}
+
+function computeRowsForPrint(){
+  var all = sortedActivities();
+  return all.map(function(a){
+    var summary = isSummary(a, state.activities);
+    var res = summary ? schedule.summaries[a.id] : schedule.tasks[a.id];
+    var esCal=null, efCal=null;
+    if(res){
+      esCal = calendarOffsetOf(res.es);
+      efCal = a.type==="milestone" ? esCal : calendarOffsetOf(Math.max(res.ef, res.es+0.001));
+    }
+    return { a:a, summary:summary, res:res, esCal:esCal, efCal:efCal };
+  });
+}
+
+function frozenWidthFor(cols, includePicker){
+  if(!includePicker) return 34+30+PRINT_NAME_W+38; // fixed WBS+ID+Name+Dur set for gantt-only mode
+  var w = PRINT_NAME_W;
+  Object.keys(PRINT_COL_PX).forEach(function(k){ if(cols[k]) w += PRINT_COL_PX[k]; });
+  return w;
+}
+function pcell(w, text, extraClass){
+  return '<div class="pg-c'+(extraClass?(" "+extraClass):"")+'" style="width:'+w+'px">'+esc(text)+'</div>';
+}
+function buildFrozenHeaderHTML(cols, includePicker){
+  if(!includePicker) return '<div class="pg-wbs">WBS</div><div class="pg-id">ID</div><div class="pg-name">Activity</div><div class="pg-dur">Dur</div>';
+  var cells=[];
+  if(cols.wbs) cells.push(pcell(PRINT_COL_PX.wbs,"WBS"));
+  if(cols.id) cells.push(pcell(PRINT_COL_PX.id,"ID"));
+  if(cols.type) cells.push(pcell(PRINT_COL_PX.type,"Type"));
+  cells.push('<div class="pg-name">Activity</div>');
+  if(cols.duration) cells.push(pcell(PRINT_COL_PX.duration,"Dur"));
+  if(cols.qty) cells.push(pcell(PRINT_COL_PX.qty,"Qty"));
+  if(cols.pred) cells.push(pcell(PRINT_COL_PX.pred,"Pred"));
+  if(cols.succ) cells.push(pcell(PRINT_COL_PX.succ,"Succ"));
+  if(cols.start) cells.push(pcell(PRINT_COL_PX.start,"Start"));
+  if(cols.finish) cells.push(pcell(PRINT_COL_PX.finish,"Finish"));
+  if(cols.float) cells.push(pcell(PRINT_COL_PX.float,"Float"));
+  return cells.join("");
+}
+function buildFrozenRowHTML(rd, cols, includePicker){
+  var a = rd.a, summary = rd.summary, res = rd.res;
+  if(!includePicker){
+    return '<div class="pg-wbs">'+esc(a.wbs)+'</div><div class="pg-id">'+esc(a.id)+'</div><div class="pg-name">'+esc(a.name)+'</div><div class="pg-dur">'+(summary?"":esc(fmtDurationText(a)))+'</div>';
+  }
+  var cells=[];
+  if(cols.wbs) cells.push(pcell(PRINT_COL_PX.wbs, a.wbs));
+  if(cols.id) cells.push(pcell(PRINT_COL_PX.id, a.id));
+  if(cols.type) cells.push(pcell(PRINT_COL_PX.type, summary?"Sum":(a.type==="milestone"?"MS":a.type==="event"?"Evt":"Task")));
+  cells.push('<div class="pg-name">'+esc(a.name)+'</div>');
+  if(cols.duration) cells.push(pcell(PRINT_COL_PX.duration, summary?"":fmtDurationText(a)));
+  if(cols.qty) cells.push(pcell(PRINT_COL_PX.qty, summary?"":[a.qty,a.unit].filter(Boolean).join(" ")));
+  if(cols.pred) cells.push(pcell(PRINT_COL_PX.pred, summary?"":a.predecessors));
+  if(cols.succ) cells.push(pcell(PRINT_COL_PX.succ, summary?"":computeSuccessorsRaw(a.id)));
+  var startTxt="", finishTxt="", floatTxt="", crit=false;
+  if(res && !schedule.error){
+    startTxt = fmtDDMMMYY(offsetToDate(state.startDate, res.es, state.calendar));
+    finishTxt = fmtDDMMMYY(offsetToDate(state.startDate, Math.max(res.es,res.ef-1), state.calendar));
+    if(!summary){ floatTxt = a.type==="event" ? "fixed" : (schedule.tasks[a.id] ? schedule.tasks[a.id].float+"d" : ""); crit = schedule.tasks[a.id] && schedule.tasks[a.id].critical; }
+  }
+  if(cols.start) cells.push(pcell(PRINT_COL_PX.start, startTxt));
+  if(cols.finish) cells.push(pcell(PRINT_COL_PX.finish, finishTxt));
+  if(cols.float) cells.push(pcell(PRINT_COL_PX.float, floatTxt, crit?"crit":""));
+  return cells.join("");
+}
+
+/* Renders the date-scale header tiers + weekend/holiday shading + gridlines for one page's date window */
+function renderPrintScale(sHead, scale, dayStart, dayEnd, dayWidth, unit, cfg, rowCount){
+  var months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  var dowNames=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  var bodyH = rowCount*PRINT_ROW_H;
+  function tier(cls,left,width,top,height,text,extra){
+    var d=document.createElement("div"); d.className="pg-tier "+cls+(extra?(" "+extra):""); d.style.left=left+"px"; d.style.width=width+"px"; d.style.top=top+"px"; d.style.height=height+"px"; d.textContent=text; sHead.appendChild(d);
+  }
+  function gridline(x){
+    var g=document.createElement("div"); g.className="pg-gridline"; g.style.left=x+"px"; g.style.top=cfg.headH+"px"; g.style.height=bodyH+"px"; scale.appendChild(g);
+  }
+  if(unit==="day"){
+    buildBands(dayStart,dayEnd,"month").forEach(function(b){
+      tier("pg-tier-top",(b.offsetStart-dayStart)*dayWidth,(b.offsetEnd-b.offsetStart)*dayWidth,0,14, months[b.date.getMonth()]+" "+b.date.getFullYear());
+    });
+    for(var d=dayStart; d<dayEnd; d++){
+      var dt = calDate(d); var x=(d-dayStart)*dayWidth;
+      var isWknd = !state.calendar.workDays[dt.getDay()];
+      var isHol = state.calendar.holidays.indexOf(dateISO(dt))>-1;
+      if(isWknd || isHol){
+        var bg=document.createElement("div"); bg.className="pg-daybg"+(isHol?" hol":""); bg.style.left=x+"px"; bg.style.width=dayWidth+"px"; bg.style.height=(cfg.headH+bodyH)+"px";
+        scale.appendChild(bg);
+      }
+      tier("pg-tier-mid", x, dayWidth, 14, 14, dowNames[dt.getDay()], isWknd?"wknd":"");
+      tier("pg-tier-bot", x, dayWidth, 28, cfg.headH-28, String(dt.getDate()), isWknd?"wknd":"");
+      if(dt.getDay()===1) gridline(x);
+    }
+  } else if(unit==="week"){
+    buildBands(dayStart,dayEnd,"month").forEach(function(b){
+      tier("pg-tier-top",(b.offsetStart-dayStart)*dayWidth,(b.offsetEnd-b.offsetStart)*dayWidth,0,14, months[b.date.getMonth()]+" "+b.date.getFullYear());
+    });
+    buildBands(dayStart,dayEnd,"week").forEach(function(b){
+      var x=(b.offsetStart-dayStart)*dayWidth, w=(b.offsetEnd-b.offsetStart)*dayWidth;
+      tier("pg-tier-mid", x, w, 14, cfg.headH-14, b.label);
+      gridline(x);
+    });
+  } else if(unit==="month" || unit==="quarter"){
+    buildBands(dayStart,dayEnd,"year").forEach(function(b){
+      tier("pg-tier-top",(b.offsetStart-dayStart)*dayWidth,(b.offsetEnd-b.offsetStart)*dayWidth,0,14, b.label);
+    });
+    buildBands(dayStart,dayEnd,unit).forEach(function(b){
+      var x=(b.offsetStart-dayStart)*dayWidth, w=(b.offsetEnd-b.offsetStart)*dayWidth;
+      tier("pg-tier-mid", x, w, 14, cfg.headH-14, b.label);
+      gridline(x);
+    });
+  } else { // year
+    buildBands(dayStart,dayEnd,"year").forEach(function(b){
+      var x=(b.offsetStart-dayStart)*dayWidth, w=(b.offsetEnd-b.offsetStart)*dayWidth;
+      tier("pg-tier-mid", x, w, 0, cfg.headH, b.label);
+      gridline(x);
+    });
+  }
+}
+
+/* Builds the full set of physical pages for Gantt-only / Table+Gantt modes.
+   Rows paginate top-to-bottom; within each row-band, dates paginate left-to-right —
+   the same order P6 lays out a large schedule across a page grid. */
+function buildPrintPaged(mode, cols, timescale){
+  var cfg = PRINT_TIMESCALES[timescale] || PRINT_TIMESCALES.day;
+  var dayWidth = cfg.dayWidth;
+  var includePicker = (mode==="both");
+  var frozenW = frozenWidthFor(cols, includePicker);
+  var scaleAvailW = Math.max(200, PRINT_PAGE_W - frozenW - 30);
+  var daysPerPage = Math.max(3, Math.floor(scaleAvailW/dayWidth));
+  var rowsPerPage = Math.max(5, Math.floor((PRINT_PAGE_H-70-cfg.headH)/PRINT_ROW_H));
+  rowsPerPage = Math.min(rowsPerPage, PRINT_ROWS_PER_PAGE*2);
+
+  var rowsData = computeRowsForPrint();
+  var totalCalDays = schedule.error ? 1 : Math.max(calendarOffsetOf(schedule.projectSpanDays), 1);
+
+  var rowChunks = [];
+  for(var i=0;i<rowsData.length;i+=rowsPerPage) rowChunks.push(rowsData.slice(i,i+rowsPerPage));
+  if(rowChunks.length===0) rowChunks = [[]];
+  var colChunks = [];
+  for(var o=0;o<totalCalDays;o+=daysPerPage) colChunks.push([o, Math.min(o+daysPerPage,totalCalDays)]);
+  if(colChunks.length===0) colChunks = [[0, Math.max(totalCalDays,1)]];
+
+  var totalPages = rowChunks.length * colChunks.length;
+  var pageNum = 0;
+  var wrap = document.createElement("div");
+
+  rowChunks.forEach(function(rowSet){
+    colChunks.forEach(function(range){
+      pageNum++;
+      var dayStart = range[0], dayEnd = range[1];
+      var page = document.createElement("div");
+      page.className = "print-page" + (pageNum<totalPages ? " page-break" : "");
+
+      var head = document.createElement("div");
+      head.className = "print-page-head";
+      head.innerHTML =
+        '<div class="ph-title">'+esc(state.projectName||"Untitled Project")+'</div>' +
+        '<div class="ph-meta">'+fmtDDMMMYY(calDate(dayStart))+' \u2192 '+fmtDDMMMYY(calDate(Math.max(dayStart,dayEnd-1)))+'  &middot;  Page '+pageNum+' of '+totalPages+'  &middot;  '+timescale.charAt(0).toUpperCase()+timescale.slice(1)+' view</div>';
+      page.appendChild(head);
+
+      var gridWrap = document.createElement("div");
+      gridWrap.className = "print-grid";
+
+      var frozen = document.createElement("div");
+      frozen.className = "pg-frozen";
+      frozen.style.width = frozenW+"px";
+      var fh = document.createElement("div");
+      fh.className = "pg-row pg-head";
+      fh.style.height = cfg.headH+"px";
+      fh.innerHTML = buildFrozenHeaderHTML(cols, includePicker);
+      frozen.appendChild(fh);
+      rowSet.forEach(function(rd){
+        var fr = document.createElement("div");
+        fr.className = "pg-row" + (rd.summary?" pg-summary":"");
+        fr.innerHTML = buildFrozenRowHTML(rd, cols, includePicker);
+        frozen.appendChild(fr);
+      });
+      gridWrap.appendChild(frozen);
+
+      var scaleWpx = (dayEnd-dayStart)*dayWidth;
+      var scale = document.createElement("div");
+      scale.className = "pg-scale";
+      scale.style.width = scaleWpx+"px";
+      var sHead = document.createElement("div");
+      sHead.className = "pg-scale-head";
+      sHead.style.height = cfg.headH+"px";
+      scale.appendChild(sHead);
+      renderPrintScale(sHead, scale, dayStart, dayEnd, dayWidth, timescale, cfg, rowSet.length);
+
+      rowSet.forEach(function(rd){
+        var rowEl = document.createElement("div");
+        rowEl.className = "pg-track-row";
+        rowEl.style.width = scaleWpx+"px";
+        if(rd.res && rd.efCal!==null && rd.efCal>=dayStart && rd.esCal<dayEnd){
+          var bs = Math.max(rd.esCal, dayStart);
+          var be = rd.a.type==="milestone" ? bs : Math.min(rd.efCal, dayEnd);
+          var x1 = (bs-dayStart)*dayWidth;
+          var w = Math.max((be-bs)*dayWidth, rd.a.type==="milestone"?0:2);
+          var bar = document.createElement("div");
+          bar.className = "pg-bar" + (rd.res.critical?" crit":"") + (rd.summary?" summary":"") + (rd.a.type==="milestone"?" ms":"");
+          if(rd.a.type==="milestone"){
+            bar.style.left = (x1-5)+"px";
+            var diamond = document.createElement("div");
+            diamond.className = "pg-diamond" + (rd.res.critical?" crit":"");
+            bar.appendChild(diamond);
+          } else {
+            bar.style.left = x1+"px"; bar.style.width = w+"px";
+          }
+          var lbl = document.createElement("span");
+          lbl.className = "pg-bar-label";
+          lbl.textContent = rd.a.name;
+          bar.appendChild(lbl);
+          rowEl.appendChild(bar);
+        }
+        scale.appendChild(rowEl);
+      });
+
+      gridWrap.appendChild(scale);
+      page.appendChild(gridWrap);
+      wrap.appendChild(page);
+    });
+  });
+  return wrap;
+}
+
+
+q("btnSave").addEventListener("click", function(){
+  downloadBlob(JSON.stringify(state, null, 2), (state.projectName||"schedule").replace(/[^\w\-]+/g,"_")+".json", "application/json");
+});
+
+q("btnLoad").addEventListener("click", function(){ q("fileInput").click(); });
+q("fileInput").addEventListener("change", function(e){
+  var file = e.target.files[0];
+  if(!file) return;
+  var reader = new FileReader();
+  reader.onload = function(){
+    try{
+      var data = JSON.parse(reader.result);
+      if(!data.activities) throw new Error("no activities");
+      // migrate legacy fields
+      data.activities.forEach(function(a){
+        if(!a.type) a.type = a.milestone ? "milestone" : "task";
+        if(!a.durationUnit) a.durationUnit = "d";
+        if(a.fixedDate===undefined) a.fixedDate = "";
+      });
+      if(!data.calendar){ data.calendar = { workDays:[false,true,true,true,true,true,false], holidays: [] }; }
+      if(!data.colWidths){ data.colWidths = Object.assign({}, DEFAULT_COL_WIDTHS); }
+      state = Object.assign({projectName:"Project",startDate:todayISO(),dayWidth:22,nextSeq:1,activities:[]}, data);
+      syncTopFields();
+      applyColWidths();
+      recalcFull();
+    }catch(err){
+      alert("Could not read that file — it doesn't look like a schedule .json saved from this tool.");
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = "";
+});
+
+function downloadBlob(content, filename, mime){
+  var blob = new Blob([content], {type:mime});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement("a");
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+}
+
+/* ============================= LOCAL AUTOSAVE ============================= */
+function saveLocal(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){} }
+var STORAGE_KEY = "pocket-scheduler-autosave";
+function loadLocal(){
+  try{
+    var raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem("site-schedule-autosave");
+    if(raw){
+      var data = JSON.parse(raw);
+      if(data && data.activities && data.activities.length){
+        data.activities.forEach(function(a){
+          if(!a.type) a.type = a.milestone ? "milestone" : "task";
+          if(!a.durationUnit) a.durationUnit = "d";
+          if(a.fixedDate===undefined) a.fixedDate = "";
+        });
+        if(!data.calendar) data.calendar = { workDays:[false,true,true,true,true,true,false], holidays: [] };
+        if(!data.colWidths) data.colWidths = Object.assign({}, DEFAULT_COL_WIDTHS);
+        state = Object.assign(state, data);
+        return true;
+      }
+    }
+  }catch(e){}
+  return false;
+}
+
+/* ============================= INIT ============================= */
+(function init(){
+  var restored = loadLocal();
+  syncTopFields();
+  applyColWidths();
+  wireColumnResize();
+  if(!restored) loadDemo();
+  else recalcFull();
+})();
+
+})();
+</script>
+</body>
+</html>
