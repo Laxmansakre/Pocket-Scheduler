@@ -222,7 +222,7 @@ button:active{transform:translateY(1px);}
 .print-table td.crit{color:#D5301F;font-weight:700;}
 
 /* Paginated Table+Gantt / Gantt engine — one .print-page per physical printed sheet */
-.print-page{page-break-inside:avoid;}
+.print-page{overflow:visible;}
 .print-page.page-break{page-break-after:always;}
 .print-page-head{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid #16233D;padding-bottom:6px;margin-bottom:6px;}
 .ph-title{font-size:14px;font-weight:700;color:#16233D;}
@@ -239,7 +239,7 @@ button:active{transform:translateY(1px);}
 .pg-c{flex:none;padding:0 3px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;box-sizing:border-box;}
 .pg-c.crit{color:#D5301F;font-weight:700;}
 
-.pg-scale{position:relative;overflow:hidden;}
+.pg-scale{position:relative;overflow:visible;flex:none;}
 .pg-scale-head{position:relative;background:#eee;border-bottom:1px solid #16233D;}
 .pg-tier{position:absolute;overflow:hidden;border-left:1px solid #ccc;box-sizing:border-box;font-weight:700;color:#555;text-align:center;}
 .pg-tier-top{font-size:7.5px;text-transform:uppercase;text-align:left;padding-left:3px;border-bottom:1px solid #ddd;font-weight:700;}
@@ -1301,8 +1301,8 @@ function fmtDurationText(a){
 
 /* ---------- Paginated print engine (P6-style: frozen ID columns repeat on every page,
    the date scale continues right then down across as many physical pages as needed) ---------- */
-var PRINT_PAGE_W = 950;   // usable content width per printed landscape page, px
-var PRINT_PAGE_H = 640;   // usable content height per printed page, px (leaves room for the page header)
+var PRINT_PAGE_W = 880;   // usable content width per printed landscape page, px (kept a bit conservative — mobile print engines can compute a narrower usable area than desktop)
+var PRINT_PAGE_H = 580;   // usable content height per printed page, px (leaves room for the page header)
 var PRINT_ROW_H = 18;
 var PRINT_ROWS_PER_PAGE = 30;
 var PRINT_TIMESCALES = {
