@@ -40,6 +40,39 @@ body{
 .mono{font-family:'IBM Plex Mono',monospace;}
 #app{display:flex;flex-direction:column;height:100vh;}
 
+/* ---------- Landing hero (first-time visitors only; skipped automatically once a project is saved) ---------- */
+#landingHero{
+  background:linear-gradient(180deg,#16233D,#1B2A4A);
+  color:#fff;
+  padding:36px 20px 30px;
+  text-align:center;
+}
+#landingHero .hero-inner{max-width:640px;margin:0 auto;}
+#landingHero .hero-mark{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px;}
+#landingHero .hero-mark span{font-size:13px;font-weight:700;letter-spacing:.04em;color:#B8C4DE;text-transform:uppercase;}
+#landingHero h1{font-size:26px;margin:0 0 8px;line-height:1.25;}
+#landingHero p.tagline{font-size:15px;color:#C9D3E6;margin:0 0 22px;line-height:1.5;}
+#landingHero .hero-features{display:flex;justify-content:center;gap:22px;flex-wrap:wrap;margin-bottom:24px;font-size:12.5px;color:#DCE4F5;}
+#landingHero .hero-features div{display:flex;align-items:center;gap:6px;}
+#landingHero .hero-features .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);flex:none;}
+#landingHero .hero-cta{background:var(--accent);color:#fff;border:none;padding:12px 28px;border-radius:6px;font-weight:700;font-size:14px;cursor:pointer;}
+#landingHero .hero-cta:hover{background:var(--accent-dark);}
+#landingHero.hidden{display:none;}
+@media print{ #landingHero{display:none !important;} }
+
+/* ---------- Mobile: stack table above Gantt instead of side-by-side ----------
+   Side-by-side, the table pane's working width alone exceeds a phone screen, which
+   pushed the Gantt chart entirely off-screen with no obvious way to reach it. */
+@media (max-width: 860px){
+  .workspace{flex-direction:column;}
+  .table-pane{width:100% !important;max-width:100% !important;min-width:0;max-height:42vh;border-right:none;border-bottom:2px solid var(--line);resize:none;}
+  .timeline-pane{min-height:280px;}
+  .topbar{padding:10px 12px;}
+  .legend{display:none;}
+}
+
+
+
 /* ---------- Top bar ---------- */
 .topbar{
   background:var(--ink); color:#fff; padding:10px 16px;
@@ -174,10 +207,14 @@ button:active{transform:translateY(1px);}
 .bar.summary-bar::after{right:-1px;transform:scaleX(-1);}
 
 /* ---------- Status bar ---------- */
-.statusbar{flex:none;padding:8px 20px;background:var(--ink);color:#CBD6E8;font-size:12px;display:flex;gap:22px;font-family:'IBM Plex Mono',monospace;align-items:center;flex-wrap:wrap;}
+.statusbar{flex:none;padding:8px 20px;background:var(--ink);color:#CBD6E8;font-size:12px;font-family:'IBM Plex Mono',monospace;display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+.statusbar-items{display:flex;gap:22px;flex-wrap:wrap;align-items:center;flex:1;}
 .statusbar b{color:#fff;}
 .statusbar .crit-dot{width:8px;height:8px;background:var(--accent);display:inline-block;border-radius:50%;margin-right:5px;}
 .statusbar .warn-dot{width:8px;height:8px;background:var(--warn);display:inline-block;border-radius:50%;margin-right:5px;}
+.feedback-link{flex:none;color:#CBD6E8;text-decoration:none;border:1px solid #3C4C6E;border-radius:4px;padding:4px 10px;font-size:11px;font-family:'IBM Plex Sans',sans-serif;white-space:nowrap;}
+.feedback-link:hover{background:#22314F;color:#fff;border-color:#4A5A7C;}
+@media print{ .feedback-link{display:none !important;} }
 
 /* ---------- Modal (calendar settings) ---------- */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(22,35,61,.5);z-index:50;align-items:center;justify-content:center;}
@@ -199,6 +236,13 @@ button:active{transform:translateY(1px);}
 .holiday-item{display:flex;align-items:center;justify-content:space-between;background:#F5F7FB;border:1px solid var(--line-soft);border-radius:5px;padding:5px 8px;font-size:12px;}
 .holiday-item button{background:none;color:var(--danger);font-size:14px;padding:0 4px;}
 .modal-foot{padding:12px 20px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:8px;}
+.help-body h4{font-size:13px;text-transform:none;letter-spacing:0;color:var(--ink);font-weight:700;margin:18px 0 6px;}
+.help-body h4:first-child{margin-top:0;}
+.help-body p{font-size:13px;line-height:1.6;color:var(--ink-soft);margin:0 0 6px;}
+.help-body ul{margin:6px 0 10px;padding-left:20px;}
+.help-body li{font-size:13px;line-height:1.6;color:var(--ink-soft);margin-bottom:3px;}
+.help-body b{color:var(--ink);}
+.help-body .tag{background:#F5F7FB;border:1px solid var(--line);border-radius:3px;padding:1px 6px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink);}
 .radio-group{display:flex;flex-direction:column;gap:8px;}
 .radio-group label{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink);}
 .col-check-grid{display:flex;flex-wrap:wrap;gap:8px 14px;}
@@ -272,7 +316,29 @@ button:active{transform:translateY(1px);}
 </style>
 </head>
 <body>
+<header id="landingHero">
+  <div class="hero-inner">
+    <div class="hero-mark">
+      <svg width="20" height="20" viewBox="0 0 26 26">
+        <rect x="2" y="3" width="22" height="20" rx="4" fill="#22314F" stroke="#fff" stroke-width="1.2"/>
+        <rect x="2" y="3" width="22" height="6" rx="4" fill="#FF6B35"/>
+        <line x1="6" y1="13" x2="20" y2="13" stroke="#B8C4DE" stroke-width="1.6"/>
+        <line x1="6" y1="17" x2="16" y2="17" stroke="#B8C4DE" stroke-width="1.6"/>
+      </svg>
+      <span>Pocket Scheduler</span>
+    </div>
+    <h1>A proper project schedule and Gantt chart — right in your browser.</h1>
+    <p class="tagline">Built for contractors, interior designers, and event planners who need real scheduling logic — predecessors, lag/lead, critical path — without the cost or setup of Primavera P6 or MS Project.</p>
+    <div class="hero-features">
+      <div><span class="dot"></span>No install, no account, no monthly fee</div>
+      <div><span class="dot"></span>Nothing leaves your device</div>
+      <div><span class="dot"></span>Print-ready Gantt output</div>
+    </div>
+    <button class="hero-cta" id="heroCta">Start Scheduling ↓</button>
+  </div>
+</header>
 <div id="app">
+
 
   <div class="topbar">
     <div class="brand">
@@ -295,6 +361,7 @@ button:active{transform:translateY(1px);}
     </div>
 
     <button class="btn-outline" id="btnCalendar">📅 Calendar</button>
+    <button class="btn-outline" id="btnHelp" title="How to use this">❓ Help</button>
 
     <div class="spacer"></div>
 
@@ -354,7 +421,10 @@ button:active{transform:translateY(1px);}
     </div>
   </div>
 
-  <div class="statusbar" id="statusBar"></div>
+  <div class="statusbar">
+    <div id="statusBar" class="statusbar-items"></div>
+    <a href="https://github.com/laxmansakre/Pocket-Scheduler/issues" target="_blank" rel="noopener" class="feedback-link">Report an issue ↗</a>
+  </div>
 </div>
 
 <input type="file" id="fileInput" accept=".json" style="display:none">
@@ -395,6 +465,49 @@ button:active{transform:translateY(1px);}
 
 <!-- Hidden container populated fresh before each print; only visible in print media -->
 <div id="printArea"></div>
+
+<!-- Help / user guide modal -->
+<div class="modal-overlay" id="helpModal">
+  <div class="modal-panel" style="width:640px;">
+    <div class="modal-head"><h3>How to use Pocket Scheduler</h3><button id="helpClose">✕</button></div>
+    <div class="modal-body help-body">
+
+      <h4>1. Building the activity list</h4>
+      <p>Add rows with <b>+ Activity</b>. Each row is either a <b>Task</b>, a <b>Milestone</b> (zero duration, shown as a diamond), or an <b>Event</b> (a fixed date you pick directly — useful for inspections, deliveries, client visits — that other activities can still depend on).</p>
+
+      <h4>2. WBS &amp; grouping</h4>
+      <p>The <b>WBS</b> column uses dot codes to build the hierarchy: <span class="tag">1</span>, <span class="tag">1.1</span>, <span class="tag">1.1.1</span>. Any row that has children automatically becomes a <b>summary row</b> — its duration, Start/Finish, predecessors and successors are disabled and instead auto-calculated from its children's dates. Rows sort automatically by WBS code.</p>
+
+      <h4>3. Duration &amp; units</h4>
+      <p>Set a number and a unit per row: <b>h</b>ours, <b>d</b>ays, <b>w</b>eeks, or <b>m</b>onths. Internally a week counts as 5 working days and a month as roughly 20 working days, so the schedule math stays consistent regardless of which unit is most natural for a given activity.</p>
+
+      <h4>4. Predecessors &amp; Successors</h4>
+      <p>Type a comma-separated list into either column — they're two views of the same link, so editing one updates the other automatically. Format: <span class="tag">A2</span> (defaults to Finish-to-Start, no lag), or explicitly <span class="tag">A3SS+2</span>, <span class="tag">A4FF-1</span>, <span class="tag">A5SF</span>.</p>
+      <ul>
+        <li><b>FS</b> Finish-to-Start — the default. B can't start until A finishes.</li>
+        <li><b>SS</b> Start-to-Start — B can't start until A starts.</li>
+        <li><b>FF</b> Finish-to-Finish — B can't finish until A finishes.</li>
+        <li><b>SF</b> Start-to-Finish — B can't finish until A starts. Rare, but supported.</li>
+        <li><b>+lag / -lead</b> — a number of working days added or subtracted, e.g. <span class="tag">FS+3</span> waits 3 extra days, <span class="tag">SS-2</span> allows a 2-day head start.</li>
+      </ul>
+      <p>A row with no predecessor and/or no successor gets a small <b>!</b> badge next to its ID — that's a heads-up, not necessarily an error (every project legitimately has one open start and one open finish), but worth a glance if it shows up somewhere unexpected.</p>
+
+      <h4>5. The calendar</h4>
+      <p>Click <b>📅 Calendar</b> to set which days of the week count as working days, and to add specific holiday/closure dates. Everything downstream — Start/Finish dates, the Gantt bars, float — respects this calendar.</p>
+
+      <h4>6. Reading the Gantt chart</h4>
+      <p>Bars in the orange hazard-stripe pattern are on the <b>critical path</b> — any delay to them delays the whole project. Grey bars with pointed ends are summary rollups. Diamonds are milestones. Use the <b>+ / −</b> zoom buttons to change how many days are visible at once. Drag a column's right edge in the table to resize it.</p>
+
+      <h4>7. Printing &amp; exporting</h4>
+      <p>The <b>Print / PDF</b> button offers three layouts — <b>Table only</b>, <b>Gantt only</b>, or <b>Table + Gantt</b> side by side — plus a choice of timescale (Days through Yearly). Large schedules automatically continue across as many pages as needed, both across dates and down through activities, the same way Primavera P6 paginates a big schedule. Use <b>Export CSV</b> for a spreadsheet copy, and <b>Save .json</b> / <b>Open…</b> to back up or hand off a project file.</p>
+
+      <h4>8. Your data</h4>
+      <p>Everything runs in your browser — there's no server and nothing is uploaded. Your project autosaves locally as you work, but clearing your browser's site data will erase it, so it's worth using <b>Save .json</b> for anything you don't want to risk losing.</p>
+
+    </div>
+    <div class="modal-foot"><button class="btn-accent" id="helpDone">Got it</button></div>
+  </div>
+</div>
 
 <!-- Calendar settings modal -->
 <div class="modal-overlay" id="calModal">
@@ -1054,15 +1167,20 @@ function renderStatusBar(){
     (schedule.openCount>0 ? '<span><span class="warn-dot"></span><b>'+schedule.openCount+'</b> open-ended</span>' : '');
 }
 
-/* recompute + light patch (used on every keystroke — never rebuilds inputs, so focus/cursor is preserved) */
+/* recompute + light patch (used on every keystroke — never rebuilds inputs, so focus/cursor is preserved).
+   The Gantt rebuild is debounced: it's the most expensive DOM operation (every day tick + bar), and doing
+   it synchronously on every single keystroke was heavy enough on mobile to occasionally cause the browser
+   to involuntarily blur the field being typed into (the keyboard app's own re-render fighting ours). */
+var timelineDebounceTimer = null;
 function recalcLight(){
   computeSchedule();
   renderErrorBanner();
   renderWarnBanner();
   patchTable();
-  renderTimeline();
   renderStatusBar();
   saveLocal();
+  clearTimeout(timelineDebounceTimer);
+  timelineDebounceTimer = setTimeout(renderTimeline, 220);
 }
 /* full rebuild (used on add/delete/reorder/load/new) */
 function recalcFull(){
@@ -1070,6 +1188,7 @@ function recalcFull(){
   renderErrorBanner();
   renderWarnBanner();
   renderTableStructure();
+  clearTimeout(timelineDebounceTimer);
   renderTimeline();
   renderStatusBar();
   saveLocal();
@@ -1180,6 +1299,12 @@ function renderHolidayList(){
   });
 }
 q("btnCalendar").addEventListener("click", function(){ renderCalendarModal(); q("calModal").classList.add("open"); });
+
+/* ---------- Help modal ---------- */
+q("btnHelp").addEventListener("click", function(){ q("helpModal").classList.add("open"); });
+q("helpClose").addEventListener("click", function(){ q("helpModal").classList.remove("open"); });
+q("helpDone").addEventListener("click", function(){ q("helpModal").classList.remove("open"); });
+q("helpModal").addEventListener("click", function(e){ if(e.target.id==="helpModal") q("helpModal").classList.remove("open"); });
 q("calClose").addEventListener("click", function(){ q("calModal").classList.remove("open"); });
 q("calDone").addEventListener("click", function(){ q("calModal").classList.remove("open"); });
 q("calModal").addEventListener("click", function(e){ if(e.target.id==="calModal") q("calModal").classList.remove("open"); });
@@ -1686,6 +1811,18 @@ function loadLocal(){
   wireColumnResize();
   if(!restored) loadDemo();
   else recalcFull();
+
+  /* Hero: skip automatically for returning users who already have a saved project;
+     first-time visitors see it, and the CTA scrolls them straight into the tool. */
+  var hero = document.getElementById("landingHero");
+  if(restored && hero){ hero.classList.add("hidden"); }
+  var heroCta = document.getElementById("heroCta");
+  if(heroCta){
+    heroCta.addEventListener("click", function(){
+      document.getElementById("app").scrollIntoView({behavior:"smooth", block:"start"});
+      if(hero) hero.classList.add("hidden");
+    });
+  }
 })();
 
 })();
