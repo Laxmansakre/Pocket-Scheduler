@@ -82,11 +82,86 @@ body{
   html,body{height:auto;}
   body:not(.force-desktop) #app{height:auto;min-height:100vh;}
   body:not(.force-desktop) .workspace{flex-direction:column;overflow:visible;margin:8px;}
-  body:not(.force-desktop) .table-pane{width:100% !important;max-width:100% !important;min-width:0;height:38vh;border-right:none;border-bottom:2px solid var(--line);resize:none;overflow-y:hidden;display:flex;flex-direction:column;}
-  body:not(.force-desktop) .timeline-pane{height:46vh;flex:none;}
+  body:not(.force-desktop) .table-pane{width:100% !important;max-width:100% !important;min-width:0;height:32vh;border-right:none;border-bottom:2px solid var(--line);resize:none;overflow-y:hidden;display:flex;flex-direction:column;}
+  body:not(.force-desktop) .timeline-pane{height:40vh;flex:none;}
   body:not(.force-desktop) .topbar{padding:8px 12px;gap:10px;}
   body:not(.force-desktop) .legend{display:none;}
   body:not(.force-desktop) .col-resize-handle{display:none;}
+
+  /* Activity list becomes collapsible cards: WBS/ID/Name/Duration stay visible on one
+     compact line so you can scan the whole schedule at a glance, and tapping a row
+     expands it to reveal everything else for editing — no horizontal scrolling either way. */
+  body:not(.force-desktop) .table-head-row{display:none;}
+  body:not(.force-desktop) .table-pane{overflow-x:hidden;}
+
+  /* Quick-reference list between the table and the Gantt: WBS/Name/Start/Finish/Duration,
+     read-only, always in sync with the table above — tap a row to jump to and expand it. */
+  body:not(.force-desktop) .mobile-wbs-list{
+    display:block;flex:none;background:#fff;border-bottom:2px solid var(--line);
+    max-height:18vh;overflow-y:auto;
+  }
+  body:not(.force-desktop) .wbslist-head,
+  body:not(.force-desktop) .wbslist-row{display:flex;align-items:center;gap:6px;padding:6px 10px;border-bottom:1px solid var(--line-soft);}
+  body:not(.force-desktop) .wbslist-head{background:#F5F7FB;font-weight:700;text-transform:uppercase;font-size:8.5px;letter-spacing:.04em;color:var(--ink-soft);position:sticky;top:0;z-index:1;}
+  body:not(.force-desktop) .wbslist-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;color:var(--ink);}
+  body:not(.force-desktop) .wbslist-start,
+  body:not(.force-desktop) .wbslist-finish{flex:0 0 58px;font-family:'IBM Plex Mono',monospace;color:var(--ink-soft);font-size:10px;text-align:right;}
+  body:not(.force-desktop) .wbslist-dur{flex:0 0 32px;font-family:'IBM Plex Mono',monospace;color:var(--ink-soft);font-size:10px;text-align:right;}
+  body:not(.force-desktop) .wbslist-row.wbslist-summary{font-weight:700;background:#F1F3F8;}
+  body:not(.force-desktop) .wbslist-row.wbslist-crit .wbslist-name{color:var(--accent-dark);}
+  body:not(.force-desktop) .wbslist-row:active{background:var(--blue-soft);}
+  body:not(.force-desktop) .row{
+    flex-wrap:wrap;align-items:center;min-width:0 !important;height:auto;
+    padding:9px 76px 9px 12px;margin:7px 8px;border:1px solid var(--line);border-radius:8px;
+    background:#fff;position:relative;box-shadow:0 1px 2px rgba(22,35,61,.06);
+  }
+  body:not(.force-desktop) .row.row-critical{border-left:4px solid var(--accent);}
+  body:not(.force-desktop) .row.summary-row{background:#F1F3F8;}
+
+  /* Always-visible compact line: WBS, ID, Name, Duration */
+  body:not(.force-desktop) .row:not(.row-expanded) .col-wbs{flex:0 0 auto !important;width:auto !important;padding:0 6px 0 0 !important;border-right:none;}
+  body:not(.force-desktop) .row:not(.row-expanded) .col-id{flex:0 0 auto !important;width:auto !important;padding:0 8px 0 0 !important;border-right:none;}
+  body:not(.force-desktop) .row:not(.row-expanded) .col-name{flex:1 1 auto !important;width:auto !important;padding:0 6px !important;min-width:0;border-right:none;}
+  body:not(.force-desktop) .row:not(.row-expanded) .col-dur{flex:0 0 auto !important;width:auto !important;padding:0 !important;border-right:none;}
+  body:not(.force-desktop) .row:not(.row-expanded) .col-wbs input{width:24px !important;background:transparent;border:none;padding:2px;}
+  body:not(.force-desktop) .row:not(.row-expanded) .col-name input{background:transparent;border:none;padding:2px;font-weight:600;}
+  body:not(.force-desktop) .row:not(.row-expanded) .col-dur input{width:32px !important;text-align:right;background:transparent;border:none;padding:2px;}
+
+  /* Collapsed: everything else hidden */
+  body:not(.force-desktop) .row:not(.row-expanded) .col-type,
+  body:not(.force-desktop) .row:not(.row-expanded) .col-durunit,
+  body:not(.force-desktop) .row:not(.row-expanded) .col-qty,
+  body:not(.force-desktop) .row:not(.row-expanded) .col-unit,
+  body:not(.force-desktop) .row:not(.row-expanded) .col-pred,
+  body:not(.force-desktop) .row:not(.row-expanded) .col-succ,
+  body:not(.force-desktop) .row:not(.row-expanded) .col-start,
+  body:not(.force-desktop) .row:not(.row-expanded) .col-finish,
+  body:not(.force-desktop) .row:not(.row-expanded) .col-float{display:none !important;}
+
+  /* Expanded: full labeled field grid */
+  body:not(.force-desktop) .row.row-expanded{align-items:stretch;padding-top:32px;}
+  body:not(.force-desktop) .row.row-expanded > div{
+    width:auto !important;flex:1 1 46% !important;border-right:none;padding:14px 6px 4px;position:relative;
+  }
+  body:not(.force-desktop) .row.row-expanded > div[data-label]::before{
+    content:attr(data-label);position:absolute;top:0;left:6px;
+    font-size:8.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);font-weight:700;
+  }
+  body:not(.force-desktop) .row.row-expanded .col-name,
+  body:not(.force-desktop) .row.row-expanded .col-pred,
+  body:not(.force-desktop) .row.row-expanded .col-succ{flex:1 1 100% !important;}
+  body:not(.force-desktop) .row.row-expanded .col-wbs input,
+  body:not(.force-desktop) .row.row-expanded .col-dur input{width:100% !important;text-align:left;font-weight:400;}
+
+  body:not(.force-desktop) .row-expand-toggle{
+    display:flex;position:absolute;top:8px;right:42px;width:28px;height:28px;
+    align-items:center;justify-content:center;background:#EDEFF5;border:none;border-radius:5px;
+    color:var(--ink-soft);font-size:14px;transition:transform .15s ease,background .15s ease,color .15s ease;
+  }
+  body:not(.force-desktop) .row.row-expanded .row-expand-toggle{transform:rotate(180deg);background:var(--blue-soft);color:var(--blue);}
+
+  body:not(.force-desktop) .col-del{position:absolute !important;top:8px !important;right:8px !important;width:auto !important;flex:none !important;padding:0 !important;}
+  body:not(.force-desktop) .delbtn{width:28px;height:28px;font-size:16px;}
 
   body:not(.force-desktop) .mobile-menu-btn{display:flex;}
   body:not(.force-desktop) .tb-secondary{display:none;}
@@ -110,11 +185,79 @@ body{
 body.force-mobile{height:auto;}
 body.force-mobile #app{height:auto;min-height:100vh;}
 body.force-mobile .workspace{flex-direction:column;overflow:visible;margin:8px;}
-body.force-mobile .table-pane{width:100% !important;max-width:100% !important;min-width:0;height:38vh;border-right:none;border-bottom:2px solid var(--line);resize:none;overflow-y:hidden;display:flex;flex-direction:column;}
-body.force-mobile .timeline-pane{height:46vh;flex:none;}
+body.force-mobile .table-pane{width:100% !important;max-width:100% !important;min-width:0;height:32vh;border-right:none;border-bottom:2px solid var(--line);resize:none;overflow-y:hidden;display:flex;flex-direction:column;}
+body.force-mobile .timeline-pane{height:40vh;flex:none;}
 body.force-mobile .topbar{padding:8px 12px;gap:10px;}
 body.force-mobile .legend{display:none;}
 body.force-mobile .col-resize-handle{display:none;}
+
+body.force-mobile .table-head-row{display:none;}
+body.force-mobile .table-pane{overflow-x:hidden;}
+
+body.force-mobile .mobile-wbs-list{
+  display:block;flex:none;background:#fff;border-bottom:2px solid var(--line);
+  max-height:18vh;overflow-y:auto;
+}
+body.force-mobile .wbslist-head,
+body.force-mobile .wbslist-row{display:flex;align-items:center;gap:6px;padding:6px 10px;border-bottom:1px solid var(--line-soft);}
+body.force-mobile .wbslist-head{background:#F5F7FB;font-weight:700;text-transform:uppercase;font-size:8.5px;letter-spacing:.04em;color:var(--ink-soft);position:sticky;top:0;z-index:1;}
+body.force-mobile .wbslist-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;color:var(--ink);}
+body.force-mobile .wbslist-start,
+body.force-mobile .wbslist-finish{flex:0 0 58px;font-family:'IBM Plex Mono',monospace;color:var(--ink-soft);font-size:10px;text-align:right;}
+body.force-mobile .wbslist-dur{flex:0 0 32px;font-family:'IBM Plex Mono',monospace;color:var(--ink-soft);font-size:10px;text-align:right;}
+body.force-mobile .wbslist-row.wbslist-summary{font-weight:700;background:#F1F3F8;}
+body.force-mobile .wbslist-row.wbslist-crit .wbslist-name{color:var(--accent-dark);}
+body.force-mobile .wbslist-row:active{background:var(--blue-soft);}
+
+body.force-mobile .row{
+  flex-wrap:wrap;align-items:center;min-width:0 !important;height:auto;
+  padding:9px 76px 9px 12px;margin:7px 8px;border:1px solid var(--line);border-radius:8px;
+  background:#fff;position:relative;box-shadow:0 1px 2px rgba(22,35,61,.06);
+}
+body.force-mobile .row.row-critical{border-left:4px solid var(--accent);}
+body.force-mobile .row.summary-row{background:#F1F3F8;}
+
+body.force-mobile .row:not(.row-expanded) .col-wbs{flex:0 0 auto !important;width:auto !important;padding:0 6px 0 0 !important;border-right:none;}
+body.force-mobile .row:not(.row-expanded) .col-id{flex:0 0 auto !important;width:auto !important;padding:0 8px 0 0 !important;border-right:none;}
+body.force-mobile .row:not(.row-expanded) .col-name{flex:1 1 auto !important;width:auto !important;padding:0 6px !important;min-width:0;border-right:none;}
+body.force-mobile .row:not(.row-expanded) .col-dur{flex:0 0 auto !important;width:auto !important;padding:0 !important;border-right:none;}
+body.force-mobile .row:not(.row-expanded) .col-wbs input{width:24px !important;background:transparent;border:none;padding:2px;}
+body.force-mobile .row:not(.row-expanded) .col-name input{background:transparent;border:none;padding:2px;font-weight:600;}
+body.force-mobile .row:not(.row-expanded) .col-dur input{width:32px !important;text-align:right;background:transparent;border:none;padding:2px;}
+
+body.force-mobile .row:not(.row-expanded) .col-type,
+body.force-mobile .row:not(.row-expanded) .col-durunit,
+body.force-mobile .row:not(.row-expanded) .col-qty,
+body.force-mobile .row:not(.row-expanded) .col-unit,
+body.force-mobile .row:not(.row-expanded) .col-pred,
+body.force-mobile .row:not(.row-expanded) .col-succ,
+body.force-mobile .row:not(.row-expanded) .col-start,
+body.force-mobile .row:not(.row-expanded) .col-finish,
+body.force-mobile .row:not(.row-expanded) .col-float{display:none !important;}
+
+body.force-mobile .row.row-expanded{align-items:stretch;padding-top:32px;}
+body.force-mobile .row.row-expanded > div{
+  width:auto !important;flex:1 1 46% !important;border-right:none;padding:14px 6px 4px;position:relative;
+}
+body.force-mobile .row.row-expanded > div[data-label]::before{
+  content:attr(data-label);position:absolute;top:0;left:6px;
+  font-size:8.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);font-weight:700;
+}
+body.force-mobile .row.row-expanded .col-name,
+body.force-mobile .row.row-expanded .col-pred,
+body.force-mobile .row.row-expanded .col-succ{flex:1 1 100% !important;}
+body.force-mobile .row.row-expanded .col-wbs input,
+body.force-mobile .row.row-expanded .col-dur input{width:100% !important;text-align:left;font-weight:400;}
+
+body.force-mobile .row-expand-toggle{
+  display:flex;position:absolute;top:8px;right:42px;width:28px;height:28px;
+  align-items:center;justify-content:center;background:#EDEFF5;border:none;border-radius:5px;
+  color:var(--ink-soft);font-size:14px;transition:transform .15s ease,background .15s ease,color .15s ease;
+}
+body.force-mobile .row.row-expanded .row-expand-toggle{transform:rotate(180deg);background:var(--blue-soft);color:var(--blue);}
+
+body.force-mobile .col-del{position:absolute !important;top:8px !important;right:8px !important;width:auto !important;flex:none !important;padding:0 !important;}
+body.force-mobile .delbtn{width:28px;height:28px;font-size:16px;}
 
 body.force-mobile .mobile-menu-btn{display:flex;}
 body.force-mobile .tb-secondary{display:none;}
@@ -229,6 +372,8 @@ button:active{transform:translateY(1px);}
 .row input:focus,.row select:focus{border-color:var(--blue);outline:none;background:#fff;}
 .row input:disabled,.row select:disabled{color:var(--summary);background:transparent;opacity:.6;}
 .delbtn{width:20px;height:20px;border-radius:4px;background:#EDEFF5;color:var(--ink-soft);border:none;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0;}
+.row-expand-toggle{display:none;} /* only shown on mobile — see the mobile card CSS blocks */
+.mobile-wbs-list{display:none;} /* only shown on mobile — see the mobile card CSS blocks */
 .delbtn:hover{background:var(--danger);color:#fff;}
 .float-val.crit{color:var(--danger);font-weight:700;}
 .float-val{font-family:'IBM Plex Mono',monospace;font-size:11.5px;}
@@ -510,6 +655,8 @@ button:active{transform:translateY(1px);}
       <div class="table-body" id="tableBody"></div>
       <div class="addrow-bar"><button id="btnAdd2">+ Add activity</button></div>
     </div>
+
+    <div class="mobile-wbs-list" id="mobileWbsList"></div>
 
     <div class="timeline-pane">
       <div class="timeline-header-wrap" id="timelineHeaderWrap">
@@ -1174,19 +1321,20 @@ function buildRow(a){
 
   row.innerHTML =
     '<div class="col-del"><button class="delbtn" data-act="del" tabindex="-1">×</button></div>' +
-    '<div class="col-wbs"><input class="mono" data-f="wbs" value="'+esc(a.wbs)+'"></div>' +
-    '<div class="col-id mono">'+a.id+'<span class="badge badge-open hidden" data-el="openBadge">!</span></div>' +
-    '<div class="col-type"><select data-f="type">'+typeOptions+'</select></div>' +
-    '<div class="col-name" style="padding-left:'+(6+indent)+'px"><input data-f="name" value="'+esc(a.name)+'"></div>' +
-    '<div class="col-dur"><input class="mono" data-f="duration" type="number" min="0" step="0.5" value="'+(a.type==="milestone"?0:a.duration)+'"></div>' +
-    '<div class="col-durunit"><select data-f="durationUnit">'+unitOptions+'</select></div>' +
-    '<div class="col-qty"><input class="mono" data-f="qty" value="'+esc(a.qty)+'"></div>' +
-    '<div class="col-unit"><input class="mono" data-f="unit" value="'+esc(a.unit)+'"></div>' +
-    '<div class="col-pred"><input class="mono" data-f="predecessors" value="'+esc(a.predecessors)+'" placeholder="'+(a.type==="loe"?"e.g. A2SS,A9FF":"e.g. A2FS+1")+'"></div>' +
-    '<div class="col-succ"><input class="mono" data-f="successors" value="'+esc(computeSuccessorsRaw(a.id))+'" placeholder="e.g. A5"></div>' +
-    '<div class="col-start"><span class="mono" data-el="startComputed"></span><input type="date" class="mono hidden" data-f="fixedDate" value="'+esc(a.fixedDate)+'"></div>' +
-    '<div class="col-finish"><span class="mono" data-el="finishComputed"></span></div>' +
-    '<div class="col-float"><span class="float-val" data-el="floatVal"></span></div>';
+    '<button class="row-expand-toggle" data-act="expand" tabindex="-1" aria-label="Show more fields">⌄</button>' +
+    '<div class="col-wbs" data-label="WBS"><input class="mono" data-f="wbs" value="'+esc(a.wbs)+'"></div>' +
+    '<div class="col-id mono" data-label="ID">'+a.id+'<span class="badge badge-open hidden" data-el="openBadge">!</span></div>' +
+    '<div class="col-type" data-label="Type"><select data-f="type">'+typeOptions+'</select></div>' +
+    '<div class="col-name" data-label="Activity" style="padding-left:'+(6+indent)+'px"><input data-f="name" value="'+esc(a.name)+'"></div>' +
+    '<div class="col-dur" data-label="Duration"><input class="mono" data-f="duration" type="number" min="0" step="0.5" value="'+(a.type==="milestone"?0:a.duration)+'"></div>' +
+    '<div class="col-durunit" data-label="Unit"><select data-f="durationUnit">'+unitOptions+'</select></div>' +
+    '<div class="col-qty" data-label="Qty"><input class="mono" data-f="qty" value="'+esc(a.qty)+'"></div>' +
+    '<div class="col-unit" data-label="UOM"><input class="mono" data-f="unit" value="'+esc(a.unit)+'"></div>' +
+    '<div class="col-pred" data-label="Predecessors"><input class="mono" data-f="predecessors" value="'+esc(a.predecessors)+'" placeholder="'+(a.type==="loe"?"e.g. A2SS,A9FF":"e.g. A2FS+1")+'"></div>' +
+    '<div class="col-succ" data-label="Successors"><input class="mono" data-f="successors" value="'+esc(computeSuccessorsRaw(a.id))+'" placeholder="e.g. A5"></div>' +
+    '<div class="col-start" data-label="Start"><span class="mono" data-el="startComputed"></span><input type="date" class="mono hidden" data-f="fixedDate" value="'+esc(a.fixedDate)+'"></div>' +
+    '<div class="col-finish" data-label="Finish"><span class="mono" data-el="finishComputed"></span></div>' +
+    '<div class="col-float" data-label="Float"><span class="float-val" data-el="floatVal"></span></div>';
 
   return row;
 }
@@ -1206,7 +1354,8 @@ function patchTable(){
     var summary = isSummary(a, state.activities);
     var res = summary ? schedule.summaries[a.id] : schedule.tasks[a.id];
 
-    row.className = "row" + (res && res.critical ? " critical" : "") + (summary ? " summary-row" : "");
+    var wasExpanded = row.classList.contains("row-expanded");
+    row.className = "row" + (res && res.critical ? " critical row-critical" : "") + (summary ? " summary-row" : "") + (wasExpanded ? " row-expanded" : "");
 
     // type select
     var typeSel = row.querySelector('[data-f="type"]');
@@ -1292,6 +1441,43 @@ function patchTable(){
 }
 
 /* ---------- Timeline / Gantt (safe to fully redraw, no editable inputs inside) ---------- */
+/* ---------- Mobile: quick-reference WBS/date list between the table and the Gantt ---------- */
+function renderMobileWbsList(){
+  var el = q("mobileWbsList");
+  if(!el) return;
+  var head = '<div class="wbslist-head"><span class="wbslist-name">Activity</span><span class="wbslist-dur">Dur</span><span class="wbslist-start">Start</span><span class="wbslist-finish">Finish</span></div>';
+  if(schedule.error){ el.innerHTML = head; return; }
+  var all = sortedActivities();
+  var rows = all.map(function(a){
+    var summary = isSummary(a, state.activities);
+    var res = summary ? schedule.summaries[a.id] : schedule.tasks[a.id];
+    var indent = (wbsLevel(a.wbs)-1)*12;
+    var startTxt="", finishTxt="", durTxt="";
+    if(res){
+      startTxt = fmtDDMMMYY(offsetToDate(state.startDate, res.es, state.calendar));
+      finishTxt = fmtDDMMMYY(offsetToDate(state.startDate, Math.max(res.es, res.ef-1), state.calendar));
+    }
+    durTxt = (summary || a.type==="loe") ? summaryDurationText(res) : fmtDurationText(a);
+    var crit = summary ? (res && res.critical) : (schedule.tasks[a.id] && schedule.tasks[a.id].critical);
+    return '<div class="wbslist-row'+(summary?' wbslist-summary':'')+(crit?' wbslist-crit':'')+'" data-id="'+esc(a.id)+'">' +
+      '<span class="wbslist-name" style="padding-left:'+indent+'px">'+esc(a.wbs)+'&nbsp; '+esc(a.name)+'</span>' +
+      '<span class="wbslist-dur">'+esc(durTxt)+'</span>' +
+      '<span class="wbslist-start">'+startTxt+'</span>' +
+      '<span class="wbslist-finish">'+finishTxt+'</span>' +
+    '</div>';
+  }).join("");
+  el.innerHTML = head + rows;
+}
+q("mobileWbsList").addEventListener("click", function(e){
+  var item = e.target.closest(".wbslist-row");
+  if(!item) return;
+  var card = document.querySelector('#tableBody .row[data-id="'+item.dataset.id+'"]');
+  if(!card) return;
+  document.querySelectorAll("#tableBody .row.row-expanded").forEach(function(r){ r.classList.remove("row-expanded"); });
+  card.classList.add("row-expanded");
+  card.scrollIntoView({behavior:"smooth", block:"center"});
+});
+
 function renderTimeline(){
   var dw = state.dayWidth;
   var span = Math.max(schedule.error?10:calendarOffsetOf(schedule.projectSpanDays), 10) + 4;
@@ -1418,6 +1604,7 @@ function recalcLight(){
   renderErrorBanner();
   renderWarnBanner();
   patchTable();
+  renderMobileWbsList();
   renderStatusBar();
   saveLocal();
   clearTimeout(timelineDebounceTimer);
@@ -1429,6 +1616,7 @@ function recalcFull(){
   renderErrorBanner();
   renderWarnBanner();
   renderTableStructure();
+  renderMobileWbsList();
   clearTimeout(timelineDebounceTimer);
   renderTimeline();
   renderStatusBar();
@@ -1592,6 +1780,13 @@ q("tableBody").addEventListener("click", function(e){
     // also strip this id from anyone's predecessor list
     state.activities.forEach(function(a){ a.predecessors = removeToken(a.predecessors, id); });
     recalcFull();
+  }
+  if(e.target.dataset.act==="expand"){
+    var row2 = e.target.closest(".row");
+    var wasExpanded = row2.classList.contains("row-expanded");
+    // one expanded card at a time — keeps the "scan the whole list" view from getting cluttered
+    document.querySelectorAll("#tableBody .row.row-expanded").forEach(function(r){ r.classList.remove("row-expanded"); });
+    if(!wasExpanded) row2.classList.add("row-expanded");
   }
 });
 
@@ -1819,16 +2014,48 @@ q("npCreate").addEventListener("click", function(){
   q("newProjModal").classList.remove("open");
 });
 
-/* scroll sync (vertical only; horizontal scroll of table is native via table-pane overflow-x) */
-var tBody = q("tableBody"), tlBodyWrap = q("timelineBodyWrap"), tlHeaderWrap = q("timelineHeaderWrap");
+/* Scroll sync: the table and Gantt share an identical row height, so they stay synced
+   pixel-for-pixel exactly as before. The WBS quick-reference list uses a different, more
+   compact row height, so it can only be kept in step proportionally by scroll percentage —
+   still keeps all three sections moving together, just without false precision where none
+   is possible.
+
+   Guarding against feedback loops needs care here: a browser's own "scroll" event for a
+   programmatic `el.scrollTop = x` fires asynchronously, on a later tick — not immediately.
+   Resetting the "syncing" flag synchronously (at the end of the handler, in the same tick)
+   left a window where that delayed echo-event arrived after the flag had already been
+   cleared, slipped past the guard, and re-triggered the other containers — with three
+   containers cross-syncing each other instead of two, that was enough to cascade into a
+   runaway scroll loop. Deferring the flag's reset to the next animation frame instead
+   ensures it's still up when those delayed echoes arrive. */
+var tBody = q("tableBody"), tlBodyWrap = q("timelineBodyWrap"), tlHeaderWrap = q("timelineHeaderWrap"), wbsListEl = q("mobileWbsList");
 var syncing = false;
-tBody.addEventListener("scroll", function(){ if(syncing) return; syncing=true; tlBodyWrap.scrollTop = tBody.scrollTop; syncing=false; });
+function endSyncSoon(){ requestAnimationFrame(function(){ syncing = false; }); }
+function scrollFrac(el){ var r = el.scrollHeight - el.clientHeight; return r>0 ? el.scrollTop/r : 0; }
+function applyScrollFrac(el, frac){ var r = el.scrollHeight - el.clientHeight; if(r>0) el.scrollTop = frac*r; }
+
+tBody.addEventListener("scroll", function(){
+  if(syncing) return; syncing=true;
+  tlBodyWrap.scrollTop = tBody.scrollTop;
+  if(wbsListEl) applyScrollFrac(wbsListEl, scrollFrac(tBody));
+  endSyncSoon();
+});
 tlBodyWrap.addEventListener("scroll", function(){
   if(syncing) return; syncing=true;
   tBody.scrollTop = tlBodyWrap.scrollTop;
+  if(wbsListEl) applyScrollFrac(wbsListEl, scrollFrac(tlBodyWrap));
   tlHeaderWrap.scrollLeft = tlBodyWrap.scrollLeft;
-  syncing=false;
+  endSyncSoon();
 });
+if(wbsListEl){
+  wbsListEl.addEventListener("scroll", function(){
+    if(syncing) return; syncing=true;
+    var frac = scrollFrac(wbsListEl);
+    applyScrollFrac(tBody, frac);
+    applyScrollFrac(tlBodyWrap, frac);
+    endSyncSoon();
+  });
+}
 
 /* ============================= EXPORT / IMPORT ============================= */
 q("btnCsv").addEventListener("click", function(){
