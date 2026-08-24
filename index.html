@@ -198,27 +198,27 @@ button:active{transform:translateY(1px);}
 .table-pane{width:900px;flex:none;display:flex;flex-direction:column;border-right:2px solid var(--line);min-width:320px;max-width:1400px;resize:horizontal;overflow-x:auto;overflow-y:hidden;}
 .table-head-row{
   height:var(--hdr-h);flex:none;display:flex;align-items:stretch;background:#F5F7FB;border-bottom:2px solid var(--line);
-  font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);font-weight:600;min-width:1080px;
+  font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);font-weight:600;min-width:var(--table-min-w,1080px);
 }
 .table-head-row > div{display:flex;align-items:center;padding:0 6px;border-right:1px solid var(--line-soft);}
 .table-body{flex:1;overflow-y:auto;overflow-x:hidden;}
-.row{display:flex;align-items:stretch;height:var(--row-h);border-bottom:1px solid var(--line-soft);min-width:1080px;}
+.row{display:flex;align-items:stretch;height:var(--row-h);border-bottom:1px solid var(--line-soft);min-width:var(--table-min-w,1080px);}
 .row:hover{background:#F7F9FD;}
 .row.summary-row{background:#F1F3F8;font-weight:600;}
 .row > div{display:flex;align-items:center;padding:0 5px;border-right:1px solid var(--line-soft);overflow:hidden;position:relative;}
 .col-del{width:26px;flex:none;justify-content:center;}
-.col-wbs{width:56px;flex:none;}
-.col-id{width:42px;flex:none;color:var(--blue);}
-.col-type{width:98px;flex:none;}
-.col-name{width:180px;flex:1;min-width:140px;}
-.col-dur{width:44px;flex:none;}
-.col-durunit{width:44px;flex:none;}
-.col-qty{width:50px;flex:none;}
-.col-unit{width:46px;flex:none;}
-.col-pred{width:100px;flex:none;}
-.col-succ{width:100px;flex:none;}
-.col-start{width:88px;flex:none;}
-.col-finish{width:82px;flex:none;}
+.col-wbs{width:var(--w-wbs,56px);flex:none;}
+.col-id{width:var(--w-id,42px);flex:none;color:var(--blue);}
+.col-type{width:var(--w-type,98px);flex:none;}
+.col-name{width:var(--w-name,180px);flex:none;min-width:140px;}
+.col-dur{width:var(--w-dur,44px);flex:none;}
+.col-durunit{width:var(--w-durunit,44px);flex:none;}
+.col-qty{width:var(--w-qty,50px);flex:none;}
+.col-unit{width:var(--w-unit,46px);flex:none;}
+.col-pred{width:var(--w-pred,100px);flex:none;}
+.col-succ{width:var(--w-succ,100px);flex:none;}
+.col-start{width:var(--w-start,88px);flex:none;}
+.col-finish{width:var(--w-finish,82px);flex:none;}
 .col-float{width:52px;flex:none;justify-content:center;}
 .row input, .row select{
   width:100%;border:1px solid transparent;background:transparent;font-family:'IBM Plex Mono',monospace;font-size:12px;
@@ -1101,19 +1101,21 @@ function applyDeviceModeClass(){
   document.body.classList.toggle("force-desktop", deviceMode==="desktop");
 }
 function applyColWidths(){
-  var css = "";
+  // Column widths are applied as CSS custom properties (updated on the root element) rather
+  // than by injecting/rewriting a <style> block on every change. Custom properties propagate
+  // to all matching elements immediately and consistently across browsers; a freshly-injected
+  // stylesheet is more prone to update-timing quirks, particularly on iOS Safari, which is a
+  // more likely explanation for cells silently failing to size/render correctly there.
+  var root = document.documentElement.style;
   var total = 26; // del column
   var mobile = isMobileViewport();
   Object.keys(COL_CLASS).forEach(function(k){
     var w = mobile ? DEFAULT_COL_WIDTHS[k] : (state.colWidths[k] || DEFAULT_COL_WIDTHS[k]);
-    css += "."+COL_CLASS[k]+"{width:"+w+"px !important; flex:none !important;}\n";
+    root.setProperty("--w-"+k, w+"px");
     total += w;
   });
   total += 52; // float column (fixed, not resizable)
-  css += ".table-head-row,.row{min-width:"+total+"px;}\n";
-  var styleEl = q("colWidthStyle");
-  if(!styleEl){ styleEl=document.createElement("style"); styleEl.id="colWidthStyle"; document.head.appendChild(styleEl); }
-  styleEl.textContent = css;
+  root.setProperty("--table-min-w", total+"px");
 }
 function wireColumnResize(){
   document.querySelectorAll(".col-resize-handle").forEach(function(handle){
