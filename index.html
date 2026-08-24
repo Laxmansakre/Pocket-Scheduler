@@ -68,6 +68,12 @@ body{
    block plus a Gantt block stacked inside that same fixed, non-scrolling space left
    no room for the Gantt — it wasn't broken, just clipped invisible below the fold.
 
+   The toolbar itself collapses into a hamburger menu on mobile: Project/Start date/
+   Calendar/Help/Zoom/New/Open/Save/Export/Print all move into a slide-down panel,
+   leaving only the brand, the menu button, and the primary "+ Activity" action
+   visible in a single compact header row — freeing most of the screen for the
+   actual table and Gantt.
+
    These rules apply either when the viewport is actually narrow, OR when the person
    has explicitly chosen "Phone" in the device-mode prompt (body.force-mobile) — and
    are suppressed by an explicit "Computer" choice (body.force-desktop) even on a
@@ -76,32 +82,63 @@ body{
   html,body{height:auto;}
   body:not(.force-desktop) #app{height:auto;min-height:100vh;}
   body:not(.force-desktop) .workspace{flex-direction:column;overflow:visible;margin:8px;}
-  body:not(.force-desktop) .table-pane{width:100% !important;max-width:100% !important;min-width:0;height:320px;border-right:none;border-bottom:2px solid var(--line);resize:none;overflow-y:hidden;display:flex;flex-direction:column;}
-  body:not(.force-desktop) .timeline-pane{height:420px;flex:none;}
-  body:not(.force-desktop) .topbar{padding:10px 12px;}
+  body:not(.force-desktop) .table-pane{width:100% !important;max-width:100% !important;min-width:0;height:38vh;border-right:none;border-bottom:2px solid var(--line);resize:none;overflow-y:hidden;display:flex;flex-direction:column;}
+  body:not(.force-desktop) .timeline-pane{height:46vh;flex:none;}
+  body:not(.force-desktop) .topbar{padding:8px 12px;gap:10px;}
   body:not(.force-desktop) .legend{display:none;}
   body:not(.force-desktop) .col-resize-handle{display:none;}
+
+  body:not(.force-desktop) .mobile-menu-btn{display:flex;}
+  body:not(.force-desktop) .tb-secondary{display:none;}
+  body:not(.force-desktop) .topbar.menu-open .tb-secondary{
+    display:flex;flex-direction:column;align-items:stretch;gap:12px;
+    position:absolute;top:100%;left:0;right:0;
+    background:var(--ink);padding:14px 16px 18px;
+    max-height:75vh;overflow-y:auto;z-index:95;
+    box-shadow:0 10px 24px rgba(0,0,0,.35);
+    border-top:1px solid #2A3B5C;
+  }
+  body:not(.force-desktop) .topbar.menu-open .tb-secondary .field-inline{width:100%;}
+  body:not(.force-desktop) .topbar.menu-open .tb-secondary .field-inline input{width:100%;box-sizing:border-box;}
+  body:not(.force-desktop) .topbar.menu-open .tb-secondary > button{width:100%;justify-content:center;}
+  body:not(.force-desktop) .topbar.menu-open .tb-secondary .spacer{display:none;}
+  body:not(.force-desktop) .topbar.menu-open .tb-secondary .zoom-group{width:100%;}
+  body:not(.force-desktop) .topbar.menu-open .tb-secondary .zoom-group button{flex:1;}
+  body:not(.force-desktop) .topbar.menu-open .tb-secondary .toolbar-actions{width:100%;flex-direction:column;gap:8px;}
+  body:not(.force-desktop) .topbar.menu-open .tb-secondary .toolbar-actions button{width:100%;}
 }
 body.force-mobile{height:auto;}
 body.force-mobile #app{height:auto;min-height:100vh;}
 body.force-mobile .workspace{flex-direction:column;overflow:visible;margin:8px;}
-body.force-mobile .table-pane{width:100% !important;max-width:100% !important;min-width:0;height:320px;border-right:none;border-bottom:2px solid var(--line);resize:none;overflow-y:hidden;display:flex;flex-direction:column;}
-body.force-mobile .timeline-pane{height:420px;flex:none;}
-body.force-mobile .topbar{padding:10px 12px;}
+body.force-mobile .table-pane{width:100% !important;max-width:100% !important;min-width:0;height:38vh;border-right:none;border-bottom:2px solid var(--line);resize:none;overflow-y:hidden;display:flex;flex-direction:column;}
+body.force-mobile .timeline-pane{height:46vh;flex:none;}
+body.force-mobile .topbar{padding:8px 12px;gap:10px;}
 body.force-mobile .legend{display:none;}
 body.force-mobile .col-resize-handle{display:none;}
 
+body.force-mobile .mobile-menu-btn{display:flex;}
+body.force-mobile .tb-secondary{display:none;}
+body.force-mobile .topbar.menu-open .tb-secondary{
+  display:flex;flex-direction:column;align-items:stretch;gap:12px;
+  position:absolute;top:100%;left:0;right:0;
+  background:var(--ink);padding:14px 16px 18px;
+  max-height:75vh;overflow-y:auto;z-index:95;
+  box-shadow:0 10px 24px rgba(0,0,0,.35);
+  border-top:1px solid #2A3B5C;
+}
+body.force-mobile .topbar.menu-open .tb-secondary .field-inline{width:100%;}
+body.force-mobile .topbar.menu-open .tb-secondary .field-inline input{width:100%;box-sizing:border-box;}
+body.force-mobile .topbar.menu-open .tb-secondary > button{width:100%;justify-content:center;}
+body.force-mobile .topbar.menu-open .tb-secondary .spacer{display:none;}
+body.force-mobile .topbar.menu-open .tb-secondary .zoom-group{width:100%;}
+body.force-mobile .topbar.menu-open .tb-secondary .zoom-group button{flex:1;}
+body.force-mobile .topbar.menu-open .tb-secondary .toolbar-actions{width:100%;flex-direction:column;gap:8px;}
+body.force-mobile .topbar.menu-open .tb-secondary .toolbar-actions button{width:100%;}
+
 /* Extra headroom for small phones (~5.7in / ~360px CSS width) specifically */
 @media (max-width: 380px){
-  body:not(.force-desktop) .topbar{gap:8px;}
-  body:not(.force-desktop) .topbar .brand span{display:none;}
-  body:not(.force-desktop) .field-inline input[type=text],
-  body:not(.force-desktop) .field-inline input[type=date]{width:118px;}
-  body:not(.force-desktop) .toolbar-actions button{padding:7px 9px;font-size:11.5px;}
   body:not(.force-desktop) .modal-panel{width:92vw !important;}
 }
-body.force-mobile .topbar{gap:8px;}
-body.force-mobile .toolbar-actions button{padding:7px 9px;font-size:11.5px;}
 body.force-mobile .modal-panel{width:92vw !important;}
 
 
@@ -111,7 +148,10 @@ body.force-mobile .modal-panel{width:92vw !important;}
   background:var(--ink); color:#fff; padding:10px 16px;
   display:flex; align-items:center; gap:16px; flex-wrap:wrap;
   border-bottom:3px solid var(--accent);
+  position:relative;
 }
+.tb-secondary{display:flex;align-items:center;gap:16px;flex-wrap:wrap;flex:1;}
+.mobile-menu-btn{display:none;background:#22314F;color:#fff;border:1px solid #3C4C6E;border-radius:5px;width:38px;height:34px;font-size:17px;flex:none;align-items:center;justify-content:center;}
 .topbar .brand{display:flex;align-items:center;gap:10px;margin-right:4px;}
 .topbar .brand .swatch{width:14px;height:14px;background:var(--accent);border:2px solid #fff;transform:rotate(45deg);flex:none;}
 .topbar .brand b{font-size:16px;letter-spacing:.2px;}
@@ -394,7 +434,7 @@ button:active{transform:translateY(1px);}
 <div id="app">
 
 
-  <div class="topbar">
+  <div class="topbar" id="topbarEl">
     <div class="brand">
       <svg width="26" height="26" viewBox="0 0 26 26" style="flex:none;">
         <rect x="2" y="3" width="22" height="20" rx="4" fill="#22314F" stroke="#fff" stroke-width="1.2"/>
@@ -405,33 +445,38 @@ button:active{transform:translateY(1px);}
       <div><b>Pocket Scheduler</b><span>activity &amp; gantt builder</span></div>
     </div>
 
-    <div class="field-inline">
-      <label>Project</label>
-      <input type="text" id="projName" class="mono" value="New Project">
-    </div>
-    <div class="field-inline">
-      <label>Start date</label>
-      <input type="date" id="projStart">
+    <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Menu">☰</button>
+
+    <div class="tb-secondary" id="tbSecondary">
+      <div class="field-inline">
+        <label>Project</label>
+        <input type="text" id="projName" class="mono" value="New Project">
+      </div>
+      <div class="field-inline">
+        <label>Start date</label>
+        <input type="date" id="projStart">
+      </div>
+
+      <button class="btn-outline" id="btnCalendar">📅 Calendar</button>
+      <button class="btn-outline" id="btnHelp" title="How to use this">❓ Help</button>
+
+      <div class="spacer"></div>
+
+      <div class="zoom-group">
+        <button id="zoomOut" title="Zoom out">−</button>
+        <button id="zoomIn" title="Zoom in">+</button>
+      </div>
+      <div class="toolbar-actions">
+        <button class="btn-outline" id="btnNew">New</button>
+        <button class="btn-outline" id="btnLoad">Open…</button>
+        <button class="btn-outline" id="btnSave">Save .json</button>
+        <button class="btn-ghost" id="btnCsv">Export CSV</button>
+        <button class="btn-ghost" id="btnExcel">Export Excel</button>
+        <button class="btn-ghost" id="btnPrint">Print / PDF</button>
+      </div>
     </div>
 
-    <button class="btn-outline" id="btnCalendar">📅 Calendar</button>
-    <button class="btn-outline" id="btnHelp" title="How to use this">❓ Help</button>
-
-    <div class="spacer"></div>
-
-    <div class="zoom-group">
-      <button id="zoomOut" title="Zoom out">−</button>
-      <button id="zoomIn" title="Zoom in">+</button>
-    </div>
-    <div class="toolbar-actions">
-      <button class="btn-outline" id="btnNew">New</button>
-      <button class="btn-outline" id="btnLoad">Open…</button>
-      <button class="btn-outline" id="btnSave">Save .json</button>
-      <button class="btn-ghost" id="btnCsv">Export CSV</button>
-      <button class="btn-ghost" id="btnExcel">Export Excel</button>
-      <button class="btn-ghost" id="btnPrint">Print / PDF</button>
-      <button class="btn-accent" id="btnAdd">+ Activity</button>
-    </div>
+    <button class="btn-accent" id="btnAdd">+ Activity</button>
   </div>
 
   <div class="legend">
@@ -734,12 +779,25 @@ function wbsLevel(w){ return (w||"1").split(".").length; }
 
 /* ============================= Predecessor token parsing ============================= */
 var PRED_RE = /^(.+?)(?:(FS|SS|FF|SF)([+-]\d+)?)?$/i;
+var TRAILING_LAG_RE = /^(.+?)([+-]\d+)$/;
 function parsePredList(raw){
   if(!raw) return [];
+  var knownIds = {};
+  state.activities.forEach(function(a){ knownIds[a.id] = true; });
   return raw.split(",").map(function(t){return t.trim();}).filter(Boolean).map(function(tok){
     var m = PRED_RE.exec(tok);
     if(!m) return {raw:tok, invalid:true};
-    return { id:m[1], type:(m[2]||"FS").toUpperCase(), lag:m[3]?parseInt(m[3],10):0, raw:tok };
+    var id = m[1], type = (m[2]||"FS").toUpperCase(), lag = m[3]?parseInt(m[3],10):0;
+    // No explicit FS/SS/FF/SF was found, so the whole token got read as one literal ID.
+    // If that exact ID doesn't exist, but stripping a trailing +N/-N does resolve to a real
+    // ID, prefer that reading (implicit FS + lag) — this keeps the short "A5+1" shorthand
+    // working, while still correctly treating something like "10242-Act-40" as one whole ID
+    // when it genuinely exists (checked first, so it always wins over the shorthand guess).
+    if(!m[2] && !knownIds[id]){
+      var lm = TRAILING_LAG_RE.exec(id);
+      if(lm && knownIds[lm[1]]){ id = lm[1]; lag = parseInt(lm[2],10); }
+    }
+    return { id:id, type:type, lag:lag, raw:tok };
   });
 }
 function serializeToken(id,type,lag){
@@ -1627,6 +1685,36 @@ q("helpSwitchMobile").addEventListener("click", function(){ setDeviceMode("mobil
 q("helpSwitchDesktop").addEventListener("click", function(){ setDeviceMode("desktop"); });
 
 q("btnHelp").addEventListener("click", function(){ updateHelpDeviceLabel(); q("helpModal").classList.add("open"); });
+
+/* ---------- Mobile hamburger menu ---------- */
+(function(){
+  var topbarEl = q("topbarEl");
+  var menuBtn = q("mobileMenuBtn");
+  var secondary = q("tbSecondary");
+  function setMenuOpen(open){
+    topbarEl.classList.toggle("menu-open", open);
+    menuBtn.textContent = open ? "✕" : "☰";
+  }
+  menuBtn.addEventListener("click", function(e){
+    e.stopPropagation();
+    setMenuOpen(!topbarEl.classList.contains("menu-open"));
+  });
+  secondary.addEventListener("click", function(e){
+    // Any actual button tap (New, Open, Save, Export, Print, Calendar, Help, zoom) closes the
+    // panel afterward; typing into Project/Start date shouldn't, since those aren't buttons.
+    if(e.target.closest("button")){
+      setTimeout(function(){ setMenuOpen(false); }, 80);
+    }
+  });
+  document.addEventListener("click", function(e){
+    if(!topbarEl.classList.contains("menu-open")) return;
+    if(topbarEl.contains(e.target)) return;
+    setMenuOpen(false);
+  });
+  document.addEventListener("keydown", function(e){
+    if(e.key==="Escape") setMenuOpen(false);
+  });
+})();
 q("helpClose").addEventListener("click", function(){ q("helpModal").classList.remove("open"); });
 q("helpDone").addEventListener("click", function(){ q("helpModal").classList.remove("open"); });
 q("helpModal").addEventListener("click", function(e){ if(e.target.id==="helpModal") q("helpModal").classList.remove("open"); });
