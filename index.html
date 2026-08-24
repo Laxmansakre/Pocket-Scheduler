@@ -79,14 +79,28 @@ body{
    are suppressed by an explicit "Computer" choice (body.force-desktop) even on a
    narrow window. */
 @media (max-width: 860px){
-  html,body{height:auto;}
-  body:not(.force-desktop) #app{height:auto;min-height:100vh;}
-  body:not(.force-desktop) .workspace{flex-direction:column;overflow:visible;margin:8px;}
-  body:not(.force-desktop) .table-pane{width:100% !important;max-width:100% !important;min-width:0;height:32vh;border-right:none;border-bottom:2px solid var(--line);resize:none;overflow-y:hidden;display:flex;flex-direction:column;}
-  body:not(.force-desktop) .timeline-pane{height:40vh;flex:none;}
+  html,body{height:100%;}
+  body:not(.force-desktop) #app{height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+  body:not(.force-desktop) .workspace{flex:1;flex-direction:column;overflow:hidden;margin:0;min-height:0;}
+  body:not(.force-desktop) .table-pane{width:100% !important;max-width:100% !important;min-width:0;border-right:none;resize:none;overflow-y:hidden;display:none;flex-direction:column;}
+  body:not(.force-desktop) .timeline-pane{display:none;flex:none;}
   body:not(.force-desktop) .topbar{padding:8px 12px;gap:10px;}
   body:not(.force-desktop) .legend{display:none;}
   body:not(.force-desktop) .col-resize-handle{display:none;}
+  body:not(.force-desktop) .statusbar{flex:none;}
+
+  /* Tab panels — exactly one full-height section visible at a time, controlled by
+     body[data-mobile-tab]. This is why the old scroll-sync bugs are gone entirely on
+     mobile now: with only one section ever on screen, there's nothing left to keep
+     in sync with anything else. */
+  body:not(.force-desktop)[data-mobile-tab="activities"] .table-pane{display:flex !important;flex:1;height:auto !important;}
+  body:not(.force-desktop)[data-mobile-tab="gantt"] .mobile-wbs-list{display:block !important;flex:0 0 34%;max-height:none !important;}
+  body:not(.force-desktop)[data-mobile-tab="gantt"] .timeline-pane{display:flex !important;flex:1;height:auto !important;}
+  body:not(.force-desktop)[data-mobile-tab="project"] .tb-secondary{
+    display:flex !important;flex-direction:column;align-items:stretch;gap:14px;
+    position:fixed;left:0;right:0;bottom:56px;
+    background:#fff;z-index:40;padding:16px;overflow-y:auto;
+  }
 
   /* Activity list becomes collapsible cards: WBS/ID/Name/Duration stay visible on one
      compact line so you can scan the whole schedule at a glance, and tapping a row
@@ -97,8 +111,8 @@ body{
   /* Quick-reference list between the table and the Gantt: WBS/Name/Start/Finish/Duration,
      read-only, always in sync with the table above — tap a row to jump to and expand it. */
   body:not(.force-desktop) .mobile-wbs-list{
-    display:block;flex:none;background:#fff;border-bottom:2px solid var(--line);
-    max-height:18vh;overflow-y:auto;
+    display:none;flex:none;background:#fff;border-bottom:2px solid var(--line);
+    overflow-y:auto;
   }
   body:not(.force-desktop) .wbslist-head,
   body:not(.force-desktop) .wbslist-row{display:flex;align-items:center;gap:6px;padding:6px 10px;border-bottom:1px solid var(--line-soft);}
@@ -152,6 +166,12 @@ body{
   body:not(.force-desktop) .row.row-expanded .col-succ{flex:1 1 100% !important;}
   body:not(.force-desktop) .row.row-expanded .col-wbs input,
   body:not(.force-desktop) .row.row-expanded .col-dur input{width:100% !important;text-align:left;font-weight:400;}
+  body:not(.force-desktop) .col-pred input[data-f],
+  body:not(.force-desktop) .col-succ input[data-f]{display:none;}
+  body:not(.force-desktop) .row.row-expanded .col-pred,
+  body:not(.force-desktop) .row.row-expanded .col-succ{display:flex !important;flex-direction:column;gap:6px;}
+  body:not(.force-desktop) .chip-list{display:flex;}
+  body:not(.force-desktop) .chip-add-btn{display:block;}
 
   body:not(.force-desktop) .row-expand-toggle{
     display:flex;position:absolute;top:8px;right:42px;width:28px;height:28px;
@@ -163,40 +183,69 @@ body{
   body:not(.force-desktop) .col-del{position:absolute !important;top:8px !important;right:8px !important;width:auto !important;flex:none !important;padding:0 !important;}
   body:not(.force-desktop) .delbtn{width:28px;height:28px;font-size:16px;}
 
-  body:not(.force-desktop) .mobile-menu-btn{display:flex;}
+  /* The hamburger menu is retired in favor of the Project tab, which now shows
+     this same content as a full panel instead of a dropdown. */
+  body:not(.force-desktop) .mobile-menu-btn{display:none !important;}
   body:not(.force-desktop) .tb-secondary{display:none;}
-  body:not(.force-desktop) .topbar.menu-open .tb-secondary{
-    display:flex;flex-direction:column;align-items:stretch;gap:12px;
-    position:absolute;top:100%;left:0;right:0;
-    background:var(--ink);padding:14px 16px 18px;
-    max-height:75vh;overflow-y:auto;z-index:95;
-    box-shadow:0 10px 24px rgba(0,0,0,.35);
-    border-top:1px solid #2A3B5C;
+  body:not(.force-desktop) .tb-secondary .field-inline{width:100%;}
+  body:not(.force-desktop) .tb-secondary .field-inline label{color:var(--ink-soft);}
+  body:not(.force-desktop) .tb-secondary .field-inline input{width:100%;box-sizing:border-box;background:#F5F7FB;color:var(--ink);border:1px solid var(--line);}
+  body:not(.force-desktop) .tb-secondary > button{width:100%;justify-content:center;color:#fff;}
+  body:not(.force-desktop) .tb-secondary .btn-outline{color:var(--ink) !important;border-color:var(--line) !important;background:#fff !important;}
+  body:not(.force-desktop) .tb-secondary .spacer{display:none;}
+  body:not(.force-desktop) .tb-secondary .zoom-group{width:100%;}
+  body:not(.force-desktop) .tb-secondary .zoom-group button{flex:1;color:#fff;}
+  body:not(.force-desktop) .tb-secondary .toolbar-actions{width:100%;flex-direction:column;gap:8px;}
+  body:not(.force-desktop) .tb-secondary .toolbar-actions button{width:100%;color:#fff;}
+
+  /* Bottom tab bar */
+  body:not(.force-desktop) .mobile-tabbar{
+    display:flex;flex:none;background:var(--ink);border-top:1px solid #2A3B5C;
+    height:56px;padding-bottom:env(safe-area-inset-bottom,0);
   }
-  body:not(.force-desktop) .topbar.menu-open .tb-secondary .field-inline{width:100%;}
-  body:not(.force-desktop) .topbar.menu-open .tb-secondary .field-inline input{width:100%;box-sizing:border-box;}
-  body:not(.force-desktop) .topbar.menu-open .tb-secondary > button{width:100%;justify-content:center;}
-  body:not(.force-desktop) .topbar.menu-open .tb-secondary .spacer{display:none;}
-  body:not(.force-desktop) .topbar.menu-open .tb-secondary .zoom-group{width:100%;}
-  body:not(.force-desktop) .topbar.menu-open .tb-secondary .zoom-group button{flex:1;}
-  body:not(.force-desktop) .topbar.menu-open .tb-secondary .toolbar-actions{width:100%;flex-direction:column;gap:8px;}
-  body:not(.force-desktop) .topbar.menu-open .tb-secondary .toolbar-actions button{width:100%;}
+  body:not(.force-desktop) .mtab-btn{
+    flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+    background:none;border:none;color:#8896B5;font-size:10px;font-weight:600;border-radius:0;
+  }
+  body:not(.force-desktop) .mtab-btn .mtab-icon{font-size:18px;}
+  body:not(.force-desktop) .mtab-btn.active{color:#fff;}
+  body:not(.force-desktop) .mtab-btn.active .mtab-icon{transform:scale(1.1);}
+
+  /* Statusbar was designed as a wide desktop footer; on a narrow phone its several stat
+     items were wrapping across 2-3 lines, eating a surprising amount of the vertical
+     budget we just worked to free up. Keep it to one compact, horizontally-scrollable
+     line instead, and move "Report an issue" into the Project tab where it fits better
+     alongside the other secondary actions. */
+  body:not(.force-desktop) .statusbar{padding:6px 12px;font-size:10px;}
+  body:not(.force-desktop) .statusbar-items{flex-wrap:nowrap;overflow-x:auto;gap:14px;}
+  body:not(.force-desktop) .feedback-link{display:none;}
+  body:not(.force-desktop) .mobile-feedback-link{display:block;}
 }
-body.force-mobile{height:auto;}
-body.force-mobile #app{height:auto;min-height:100vh;}
-body.force-mobile .workspace{flex-direction:column;overflow:visible;margin:8px;}
-body.force-mobile .table-pane{width:100% !important;max-width:100% !important;min-width:0;height:32vh;border-right:none;border-bottom:2px solid var(--line);resize:none;overflow-y:hidden;display:flex;flex-direction:column;}
-body.force-mobile .timeline-pane{height:40vh;flex:none;}
+body.force-mobile{height:100%;}
+body.force-mobile #app{height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+body.force-mobile .workspace{flex:1;flex-direction:column;overflow:hidden;margin:0;min-height:0;}
+body.force-mobile .table-pane{width:100% !important;max-width:100% !important;min-width:0;border-right:none;resize:none;overflow-y:hidden;display:none;flex-direction:column;}
+body.force-mobile .timeline-pane{display:none;flex:none;}
 body.force-mobile .topbar{padding:8px 12px;gap:10px;}
 body.force-mobile .legend{display:none;}
 body.force-mobile .col-resize-handle{display:none;}
+body.force-mobile .statusbar{flex:none;}
+
+body.force-mobile[data-mobile-tab="activities"] .table-pane{display:flex !important;flex:1;height:auto !important;}
+body.force-mobile[data-mobile-tab="gantt"] .mobile-wbs-list{display:block !important;flex:0 0 34%;max-height:none !important;}
+body.force-mobile[data-mobile-tab="gantt"] .timeline-pane{display:flex !important;flex:1;height:auto !important;}
+body.force-mobile[data-mobile-tab="project"] .tb-secondary{
+  display:flex !important;flex-direction:column;align-items:stretch;gap:14px;
+  position:fixed;left:0;right:0;bottom:56px;
+  background:#fff;z-index:40;padding:16px;overflow-y:auto;
+}
 
 body.force-mobile .table-head-row{display:none;}
 body.force-mobile .table-pane{overflow-x:hidden;}
 
 body.force-mobile .mobile-wbs-list{
-  display:block;flex:none;background:#fff;border-bottom:2px solid var(--line);
-  max-height:18vh;overflow-y:auto;
+  display:none;flex:none;background:#fff;border-bottom:2px solid var(--line);
+  overflow-y:auto;
 }
 body.force-mobile .wbslist-head,
 body.force-mobile .wbslist-row{display:flex;align-items:center;gap:6px;padding:6px 10px;border-bottom:1px solid var(--line-soft);}
@@ -248,6 +297,12 @@ body.force-mobile .row.row-expanded .col-pred,
 body.force-mobile .row.row-expanded .col-succ{flex:1 1 100% !important;}
 body.force-mobile .row.row-expanded .col-wbs input,
 body.force-mobile .row.row-expanded .col-dur input{width:100% !important;text-align:left;font-weight:400;}
+body.force-mobile .col-pred input[data-f],
+body.force-mobile .col-succ input[data-f]{display:none;}
+body.force-mobile .row.row-expanded .col-pred,
+body.force-mobile .row.row-expanded .col-succ{display:flex !important;flex-direction:column;gap:6px;}
+body.force-mobile .chip-list{display:flex;}
+body.force-mobile .chip-add-btn{display:block;}
 
 body.force-mobile .row-expand-toggle{
   display:flex;position:absolute;top:8px;right:42px;width:28px;height:28px;
@@ -259,24 +314,35 @@ body.force-mobile .row.row-expanded .row-expand-toggle{transform:rotate(180deg);
 body.force-mobile .col-del{position:absolute !important;top:8px !important;right:8px !important;width:auto !important;flex:none !important;padding:0 !important;}
 body.force-mobile .delbtn{width:28px;height:28px;font-size:16px;}
 
-body.force-mobile .mobile-menu-btn{display:flex;}
+body.force-mobile .mobile-menu-btn{display:none !important;}
 body.force-mobile .tb-secondary{display:none;}
-body.force-mobile .topbar.menu-open .tb-secondary{
-  display:flex;flex-direction:column;align-items:stretch;gap:12px;
-  position:absolute;top:100%;left:0;right:0;
-  background:var(--ink);padding:14px 16px 18px;
-  max-height:75vh;overflow-y:auto;z-index:95;
-  box-shadow:0 10px 24px rgba(0,0,0,.35);
-  border-top:1px solid #2A3B5C;
+body.force-mobile .tb-secondary .field-inline{width:100%;}
+body.force-mobile .tb-secondary .field-inline label{color:var(--ink-soft);}
+body.force-mobile .tb-secondary .field-inline input{width:100%;box-sizing:border-box;background:#F5F7FB;color:var(--ink);border:1px solid var(--line);}
+body.force-mobile .tb-secondary > button{width:100%;justify-content:center;color:#fff;}
+body.force-mobile .tb-secondary .btn-outline{color:var(--ink) !important;border-color:var(--line) !important;background:#fff !important;}
+body.force-mobile .tb-secondary .spacer{display:none;}
+body.force-mobile .tb-secondary .zoom-group{width:100%;}
+body.force-mobile .tb-secondary .zoom-group button{flex:1;color:#fff;}
+body.force-mobile .tb-secondary .toolbar-actions{width:100%;flex-direction:column;gap:8px;}
+body.force-mobile .tb-secondary .toolbar-actions button{width:100%;color:#fff;}
+
+body.force-mobile .mobile-tabbar{
+  display:flex;flex:none;background:var(--ink);border-top:1px solid #2A3B5C;
+  height:56px;padding-bottom:env(safe-area-inset-bottom,0);
 }
-body.force-mobile .topbar.menu-open .tb-secondary .field-inline{width:100%;}
-body.force-mobile .topbar.menu-open .tb-secondary .field-inline input{width:100%;box-sizing:border-box;}
-body.force-mobile .topbar.menu-open .tb-secondary > button{width:100%;justify-content:center;}
-body.force-mobile .topbar.menu-open .tb-secondary .spacer{display:none;}
-body.force-mobile .topbar.menu-open .tb-secondary .zoom-group{width:100%;}
-body.force-mobile .topbar.menu-open .tb-secondary .zoom-group button{flex:1;}
-body.force-mobile .topbar.menu-open .tb-secondary .toolbar-actions{width:100%;flex-direction:column;gap:8px;}
-body.force-mobile .topbar.menu-open .tb-secondary .toolbar-actions button{width:100%;}
+body.force-mobile .mtab-btn{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  background:none;border:none;color:#8896B5;font-size:10px;font-weight:600;border-radius:0;
+}
+body.force-mobile .mtab-btn .mtab-icon{font-size:18px;}
+body.force-mobile .mtab-btn.active{color:#fff;}
+body.force-mobile .mtab-btn.active .mtab-icon{transform:scale(1.1);}
+
+body.force-mobile .statusbar{padding:6px 12px;font-size:10px;}
+body.force-mobile .statusbar-items{flex-wrap:nowrap;overflow-x:auto;gap:14px;}
+body.force-mobile .feedback-link{display:none;}
+body.force-mobile .mobile-feedback-link{display:block;}
 
 /* Extra headroom for small phones (~5.7in / ~360px CSS width) specifically */
 @media (max-width: 380px){
@@ -374,6 +440,8 @@ button:active{transform:translateY(1px);}
 .delbtn{width:20px;height:20px;border-radius:4px;background:#EDEFF5;color:var(--ink-soft);border:none;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0;}
 .row-expand-toggle{display:none;} /* only shown on mobile — see the mobile card CSS blocks */
 .mobile-wbs-list{display:none;} /* only shown on mobile — see the mobile card CSS blocks */
+.mobile-feedback-link{display:none;} /* only shown on mobile — see the mobile card CSS blocks */
+.mobile-tabbar{display:none;} /* only shown on mobile — see the mobile card CSS blocks */
 .delbtn:hover{background:var(--danger);color:#fff;}
 .float-val.crit{color:var(--danger);font-weight:700;}
 .float-val{font-family:'IBM Plex Mono',monospace;font-size:11.5px;}
@@ -464,6 +532,29 @@ button:active{transform:translateY(1px);}
 .ac-item{padding:7px 10px;cursor:pointer;font-size:12.5px;display:flex;gap:8px;align-items:baseline;border-bottom:1px solid var(--line-soft);}
 .ac-item:last-child{border-bottom:none;}
 .ac-item:hover,.ac-item.active{background:var(--blue-soft);}
+
+/* ---------- Chip UI + tap-based predecessor/successor picker (mobile only; see mobile CSS blocks for visibility) ---------- */
+.chip-list{display:none;flex-wrap:wrap;gap:6px;}
+.chip{display:inline-flex;align-items:center;gap:5px;background:var(--blue-soft);color:var(--blue);border-radius:14px;padding:4px 6px 4px 10px;font-size:11.5px;font-family:'IBM Plex Mono',monospace;font-weight:600;}
+.chip button{background:rgba(47,111,237,.18);color:var(--blue);border:none;border-radius:50%;width:16px;height:16px;font-size:10px;line-height:1;padding:0;display:flex;align-items:center;justify-content:center;}
+.chip-add-btn{display:none;background:#F5F7FB;color:var(--blue);border:1px dashed var(--line);border-radius:6px;padding:8px;font-size:12px;font-weight:700;width:100%;margin-top:4px;}
+
+.pp-activity-list{max-height:340px;overflow-y:auto;}
+.pp-item{padding:10px;border-bottom:1px solid var(--line-soft);cursor:pointer;}
+.pp-item:active{background:var(--blue-soft);}
+.pp-item .pp-id{font-family:'IBM Plex Mono',monospace;color:var(--blue);font-weight:700;font-size:12.5px;}
+.pp-item .pp-name{color:var(--ink);font-size:13px;margin-left:6px;}
+.pp-empty{padding:16px;text-align:center;color:var(--ink-soft);font-size:13px;}
+.pp-selected-name{background:#F5F7FB;border-radius:6px;padding:10px;font-size:13px;font-weight:600;color:var(--ink);margin-bottom:16px;}
+.pp-type-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.pp-type-btn{background:#F5F7FB;border:2px solid var(--line);border-radius:8px;padding:10px 6px;font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:700;color:var(--ink);display:flex;flex-direction:column;align-items:center;gap:2px;}
+.pp-type-btn span{font-family:'IBM Plex Sans',sans-serif;font-size:10px;font-weight:500;color:var(--ink-soft);}
+.pp-type-btn.active{background:var(--blue-soft);border-color:var(--blue);color:var(--blue);}
+.pp-type-btn.active span{color:var(--blue);}
+.pp-stepper{display:flex;align-items:center;justify-content:center;gap:20px;}
+.pp-stepper button{width:44px;height:44px;border-radius:50%;background:#F5F7FB;border:1px solid var(--line);font-size:22px;color:var(--ink);}
+.pp-stepper span{font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:700;min-width:36px;text-align:center;}
+
 .ac-item.ac-item-disabled{cursor:not-allowed;opacity:.55;}
 .ac-item.ac-item-disabled:hover{background:transparent;}
 .ac-item.ac-item-disabled .ac-id{color:var(--summary);}
@@ -619,6 +710,7 @@ button:active{transform:translateY(1px);}
         <button class="btn-ghost" id="btnExcel">Export Excel</button>
         <button class="btn-ghost" id="btnPrint">Print / PDF</button>
       </div>
+      <a href="https://github.com/laxmansakre/Pocket-Scheduler/issues" target="_blank" rel="noopener" class="btn-outline mobile-feedback-link" style="text-align:center;text-decoration:none;">Report an issue ↗</a>
     </div>
 
     <button class="btn-accent" id="btnAdd">+ Activity</button>
@@ -672,6 +764,12 @@ button:active{transform:translateY(1px);}
     <div id="statusBar" class="statusbar-items"></div>
     <a href="https://github.com/laxmansakre/Pocket-Scheduler/issues" target="_blank" rel="noopener" class="feedback-link">Report an issue ↗</a>
   </div>
+
+  <nav class="mobile-tabbar" id="mobileTabbar">
+    <button class="mtab-btn active" data-tab="activities"><span class="mtab-icon">📋</span><span class="mtab-label">Activities</span></button>
+    <button class="mtab-btn" data-tab="gantt"><span class="mtab-icon">📊</span><span class="mtab-label">Gantt</span></button>
+    <button class="mtab-btn" data-tab="project"><span class="mtab-icon">⚙️</span><span class="mtab-label">Project</span></button>
+  </nav>
 </div>
 
 <input type="file" id="fileInput" accept=".json" style="display:none">
@@ -783,6 +881,38 @@ button:active{transform:translateY(1px);}
         <button class="btn-outline" id="deviceBtnDesktop" style="flex:1;color:var(--ink);border-color:var(--line);padding:18px 8px;font-size:14px;">💻<br>Computer</button>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- Tap-based predecessor/successor picker (mobile) -->
+<div class="modal-overlay" id="predPickerModal">
+  <div class="modal-panel" style="width:380px;">
+    <div class="modal-head"><h3 id="ppTitle">Add predecessor</h3><button id="predPickerClose">✕</button></div>
+    <div class="modal-body">
+      <div id="ppListScreen">
+        <input type="text" id="ppSearch" class="mono" placeholder="Search activities…" style="width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:6px;font-size:14px;margin-bottom:10px;box-sizing:border-box;">
+        <div id="ppActivityList" class="pp-activity-list"></div>
+      </div>
+      <div id="ppRelScreen" class="hidden">
+        <button id="ppBack" style="background:none;color:var(--blue);font-weight:700;padding:0 0 12px;font-size:13px;">← Back to list</button>
+        <div class="pp-selected-name" id="ppSelectedName"></div>
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft);font-weight:700;margin-bottom:8px;">Relationship</div>
+        <div class="pp-type-grid" id="ppTypeGrid">
+          <button class="pp-type-btn" data-type="FS">FS<span>Finish → Start</span></button>
+          <button class="pp-type-btn" data-type="SS">SS<span>Start → Start</span></button>
+          <button class="pp-type-btn" data-type="FF">FF<span>Finish → Finish</span></button>
+          <button class="pp-type-btn" data-type="SF">SF<span>Start → Finish</span></button>
+        </div>
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft);font-weight:700;margin:14px 0 8px;">Lag (working days)</div>
+        <div class="pp-stepper">
+          <button id="ppLagMinus">−</button>
+          <span id="ppLagVal">0</span>
+          <button id="ppLagPlus">+</button>
+        </div>
+        <button class="btn-accent" id="ppConfirmAdd" style="width:100%;margin-top:16px;padding:12px;font-size:14px;">Add</button>
+      </div>
+    </div>
+    <div class="modal-foot"><button class="btn-accent" id="ppDone">Done</button></div>
   </div>
 </div>
 
@@ -1330,8 +1460,16 @@ function buildRow(a){
     '<div class="col-durunit" data-label="Unit"><select data-f="durationUnit">'+unitOptions+'</select></div>' +
     '<div class="col-qty" data-label="Qty"><input class="mono" data-f="qty" value="'+esc(a.qty)+'"></div>' +
     '<div class="col-unit" data-label="UOM"><input class="mono" data-f="unit" value="'+esc(a.unit)+'"></div>' +
-    '<div class="col-pred" data-label="Predecessors"><input class="mono" data-f="predecessors" value="'+esc(a.predecessors)+'" placeholder="'+(a.type==="loe"?"e.g. A2SS,A9FF":"e.g. A2FS+1")+'"></div>' +
-    '<div class="col-succ" data-label="Successors"><input class="mono" data-f="successors" value="'+esc(computeSuccessorsRaw(a.id))+'" placeholder="e.g. A5"></div>' +
+    '<div class="col-pred" data-label="Predecessors">' +
+      '<input class="mono" data-f="predecessors" value="'+esc(a.predecessors)+'" placeholder="'+(a.type==="loe"?"e.g. A2SS,A9FF":"e.g. A2FS+1")+'">' +
+      '<div class="chip-list" data-field="predecessors"></div>' +
+      '<button class="chip-add-btn" data-field="predecessors" data-act="openPicker">+ Add predecessor</button>' +
+    '</div>' +
+    '<div class="col-succ" data-label="Successors">' +
+      '<input class="mono" data-f="successors" value="'+esc(computeSuccessorsRaw(a.id))+'" placeholder="e.g. A5">' +
+      '<div class="chip-list" data-field="successors"></div>' +
+      '<button class="chip-add-btn" data-field="successors" data-act="openPicker">+ Add successor</button>' +
+    '</div>' +
     '<div class="col-start" data-label="Start"><span class="mono" data-el="startComputed"></span><input type="date" class="mono hidden" data-f="fixedDate" value="'+esc(a.fixedDate)+'"></div>' +
     '<div class="col-finish" data-label="Finish"><span class="mono" data-el="finishComputed"></span></div>' +
     '<div class="col-float" data-label="Float"><span class="float-val" data-el="floatVal"></span></div>';
@@ -1389,6 +1527,14 @@ function patchTable(){
     var succInput = row.querySelector('[data-f="successors"]');
     succInput.disabled = summary;
     if(succInput!==active) succInput.value = computeSuccessorsRaw(a.id);
+
+    // chip UI (mobile) mirrors the same two fields
+    renderChipList(row.querySelector('.chip-list[data-field="predecessors"]'), a.predecessors);
+    renderChipList(row.querySelector('.chip-list[data-field="successors"]'), computeSuccessorsRaw(a.id));
+    var predAddBtn = row.querySelector('.chip-add-btn[data-field="predecessors"]');
+    if(predAddBtn) predAddBtn.classList.toggle("hidden", summary || a.type==="event");
+    var succAddBtn = row.querySelector('.chip-add-btn[data-field="successors"]');
+    if(succAddBtn) succAddBtn.classList.toggle("hidden", summary);
 
     // start cell: fixed-date input for events, computed span otherwise
     var startSpan = row.querySelector('[data-el="startComputed"]');
@@ -1722,6 +1868,105 @@ function acStepActive(dir){
     if(!acState.items[i].summary){ acState.activeIndex = i; return; }
   }
 }
+/* ---------- Chip list rendering (mobile predecessor/successor display) ---------- */
+function renderChipList(container, raw){
+  if(!container) return;
+  var tokens = parsePredList(raw).filter(function(t){ return !t.invalid; });
+  if(tokens.length===0){ container.innerHTML = ""; return; }
+  container.innerHTML = tokens.map(function(t){
+    var label = t.id + (t.type!=="FS" ? t.type : "") + (t.lag ? (t.lag>0?"+"+t.lag:t.lag) : "");
+    return '<span class="chip">'+esc(label)+'<button type="button" data-chip-remove="'+esc(t.id)+'">✕</button></span>';
+  }).join("");
+}
+q("tableBody").addEventListener("click", function(e){
+  if(e.target.dataset.act==="openPicker"){
+    var cell = e.target.closest("[data-label]");
+    var row = e.target.closest(".row");
+    openPredPicker(row.dataset.id, e.target.dataset.field);
+    return;
+  }
+  if(e.target.dataset.chipRemove){
+    var row2 = e.target.closest(".row");
+    var field = e.target.closest(".chip-list").dataset.field;
+    var act = findActivity(row2.dataset.id);
+    if(!act) return;
+    var currentRaw = field==="predecessors" ? act.predecessors : computeSuccessorsRaw(act.id);
+    var newRaw = removeToken(currentRaw, e.target.dataset.chipRemove);
+    if(field==="predecessors") act.predecessors = newRaw;
+    else setSuccessorsForActivity(act.id, newRaw);
+    recalcLight();
+  }
+});
+
+/* ---------- Tap-based predecessor/successor picker ---------- */
+var ppState = { activityId:null, field:null, targetId:null, type:"FS", lag:0 };
+function openPredPicker(activityId, field){
+  ppState.activityId = activityId; ppState.field = field;
+  q("ppTitle").textContent = field==="predecessors" ? "Add predecessor" : "Add successor";
+  q("ppSearch").value = "";
+  ppShowListScreen();
+  ppRenderList("");
+  q("predPickerModal").classList.add("open");
+}
+function ppShowListScreen(){
+  q("ppListScreen").classList.remove("hidden");
+  q("ppRelScreen").classList.add("hidden");
+}
+function ppRenderList(query){
+  query = (query||"").trim().toLowerCase();
+  var list = q("ppActivityList");
+  var items = state.activities.filter(function(a){
+    if(a.id===ppState.activityId) return false;
+    if(isSummary(a, state.activities)) return false;
+    if(!query) return true;
+    return a.id.toLowerCase().indexOf(query)>-1 || (a.name||"").toLowerCase().indexOf(query)>-1;
+  });
+  if(items.length===0){ list.innerHTML = '<div class="pp-empty">No matching activities</div>'; return; }
+  list.innerHTML = items.map(function(a){
+    return '<div class="pp-item" data-target-id="'+esc(a.id)+'"><span class="pp-id">'+esc(a.id)+'</span><span class="pp-name">'+esc(a.name)+'</span></div>';
+  }).join("");
+}
+q("ppSearch").addEventListener("input", function(){ ppRenderList(this.value); });
+q("ppActivityList").addEventListener("click", function(e){
+  var item = e.target.closest(".pp-item");
+  if(!item) return;
+  ppState.targetId = item.dataset.targetId;
+  ppState.type = "FS"; ppState.lag = 0;
+  q("ppSelectedName").textContent = "Link to: " + item.dataset.targetId + " — " + (findActivity(item.dataset.targetId)||{}).name;
+  ppUpdateTypeButtons(); ppUpdateLagDisplay();
+  q("ppListScreen").classList.add("hidden");
+  q("ppRelScreen").classList.remove("hidden");
+});
+q("ppBack").addEventListener("click", ppShowListScreen);
+function ppUpdateTypeButtons(){
+  document.querySelectorAll(".pp-type-btn").forEach(function(btn){
+    btn.classList.toggle("active", btn.dataset.type===ppState.type);
+  });
+}
+function ppUpdateLagDisplay(){ q("ppLagVal").textContent = ppState.lag; }
+q("ppTypeGrid").addEventListener("click", function(e){
+  var btn = e.target.closest(".pp-type-btn");
+  if(!btn) return;
+  ppState.type = btn.dataset.type;
+  ppUpdateTypeButtons();
+});
+q("ppLagMinus").addEventListener("click", function(){ ppState.lag -= 1; ppUpdateLagDisplay(); });
+q("ppLagPlus").addEventListener("click", function(){ ppState.lag += 1; ppUpdateLagDisplay(); });
+q("ppConfirmAdd").addEventListener("click", function(){
+  var act = findActivity(ppState.activityId);
+  if(!act) return;
+  var currentRaw = ppState.field==="predecessors" ? act.predecessors : computeSuccessorsRaw(act.id);
+  var newRaw = upsertToken(currentRaw, ppState.targetId, ppState.type, ppState.lag);
+  if(ppState.field==="predecessors") act.predecessors = newRaw;
+  else setSuccessorsForActivity(act.id, newRaw);
+  recalcLight();
+  ppShowListScreen();
+  ppRenderList(q("ppSearch").value);
+});
+q("predPickerClose").addEventListener("click", function(){ q("predPickerModal").classList.remove("open"); });
+q("ppDone").addEventListener("click", function(){ q("predPickerModal").classList.remove("open"); });
+q("predPickerModal").addEventListener("click", function(e){ if(e.target.id==="predPickerModal") q("predPickerModal").classList.remove("open"); });
+
 q("tableBody").addEventListener("focusin", function(e){
   var f = e.target.dataset && e.target.dataset.f;
   if(f==="predecessors" || f==="successors") acShow(e.target);
@@ -1912,6 +2157,34 @@ q("btnHelp").addEventListener("click", function(){ updateHelpDeviceLabel(); q("h
     if(e.key==="Escape") setMenuOpen(false);
   });
 })();
+
+/* ---------- Mobile bottom tab bar ---------- */
+(function(){
+  var tabbar = q("mobileTabbar");
+  if(!tabbar) return;
+  function positionProjectPanel(){
+    if(document.body.dataset.mobileTab!=="project") return;
+    var secondary = q("tbSecondary");
+    var topbarBottom = q("topbarEl").getBoundingClientRect().bottom;
+    secondary.style.top = topbarBottom + "px";
+  }
+  function setMobileTab(tab){
+    document.body.dataset.mobileTab = tab;
+    document.querySelectorAll(".mtab-btn").forEach(function(btn){
+      btn.classList.toggle("active", btn.dataset.tab===tab);
+    });
+    if(tab==="project") positionProjectPanel();
+    if(tab==="gantt"){ renderTimeline(); }
+  }
+  tabbar.addEventListener("click", function(e){
+    var btn = e.target.closest(".mtab-btn");
+    if(!btn) return;
+    setMobileTab(btn.dataset.tab);
+  });
+  window.addEventListener("resize", positionProjectPanel);
+  setMobileTab("activities");
+})();
+
 q("helpClose").addEventListener("click", function(){ q("helpModal").classList.remove("open"); });
 q("helpDone").addEventListener("click", function(){ q("helpModal").classList.remove("open"); });
 q("helpModal").addEventListener("click", function(e){ if(e.target.id==="helpModal") q("helpModal").classList.remove("open"); });
