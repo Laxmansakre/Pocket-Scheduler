@@ -1475,7 +1475,7 @@ q("mobileWbsList").addEventListener("click", function(e){
   if(!card) return;
   document.querySelectorAll("#tableBody .row.row-expanded").forEach(function(r){ r.classList.remove("row-expanded"); });
   card.classList.add("row-expanded");
-  card.scrollIntoView({behavior:"smooth", block:"center"});
+  card.scrollIntoView({behavior:"auto", block:"center"});
 });
 
 function renderTimeline(){
@@ -2014,48 +2014,26 @@ q("npCreate").addEventListener("click", function(){
   q("newProjModal").classList.remove("open");
 });
 
-/* Scroll sync: the table and Gantt share an identical row height, so they stay synced
-   pixel-for-pixel exactly as before. The WBS quick-reference list uses a different, more
-   compact row height, so it can only be kept in step proportionally by scroll percentage —
-   still keeps all three sections moving together, just without false precision where none
-   is possible.
+/* Scroll sync: table and Gantt only, back to the simple, proven-stable 2-way pixel sync
+   (they share an identical row height, so this is exact, not approximate).
 
-   Guarding against feedback loops needs care here: a browser's own "scroll" event for a
-   programmatic `el.scrollTop = x` fires asynchronously, on a later tick — not immediately.
-   Resetting the "syncing" flag synchronously (at the end of the handler, in the same tick)
-   left a window where that delayed echo-event arrived after the flag had already been
-   cleared, slipped past the guard, and re-triggered the other containers — with three
-   containers cross-syncing each other instead of two, that was enough to cascade into a
-   runaway scroll loop. Deferring the flag's reset to the next animation frame instead
-   ensures it's still up when those delayed echoes arrive. */
-var tBody = q("tableBody"), tlBodyWrap = q("timelineBodyWrap"), tlHeaderWrap = q("timelineHeaderWrap"), wbsListEl = q("mobileWbsList");
+   The WBS quick-reference list deliberately does NOT participate in continuous scroll
+   syncing anymore. A 3-way proportional linkage was added here, but caused a real runaway
+   scroll loop on real devices (reported on both Chrome and Safari) that didn't reproduce
+   in automated testing — rather than keep guessing at a fix I can't verify on the actual
+   hardware involved, the safer move is removing that continuous linkage entirely. Jumping
+   to a specific activity from the WBS list (see the click handler below) still works fine,
+   since a single discrete jump doesn't carry the same feedback-loop risk that continuously
+   following someone's live scroll position does. */
+var tBody = q("tableBody"), tlBodyWrap = q("timelineBodyWrap"), tlHeaderWrap = q("timelineHeaderWrap");
 var syncing = false;
-function endSyncSoon(){ requestAnimationFrame(function(){ syncing = false; }); }
-function scrollFrac(el){ var r = el.scrollHeight - el.clientHeight; return r>0 ? el.scrollTop/r : 0; }
-function applyScrollFrac(el, frac){ var r = el.scrollHeight - el.clientHeight; if(r>0) el.scrollTop = frac*r; }
-
-tBody.addEventListener("scroll", function(){
-  if(syncing) return; syncing=true;
-  tlBodyWrap.scrollTop = tBody.scrollTop;
-  if(wbsListEl) applyScrollFrac(wbsListEl, scrollFrac(tBody));
-  endSyncSoon();
-});
+tBody.addEventListener("scroll", function(){ if(syncing) return; syncing=true; tlBodyWrap.scrollTop = tBody.scrollTop; syncing=false; });
 tlBodyWrap.addEventListener("scroll", function(){
   if(syncing) return; syncing=true;
   tBody.scrollTop = tlBodyWrap.scrollTop;
-  if(wbsListEl) applyScrollFrac(wbsListEl, scrollFrac(tlBodyWrap));
   tlHeaderWrap.scrollLeft = tlBodyWrap.scrollLeft;
-  endSyncSoon();
+  syncing=false;
 });
-if(wbsListEl){
-  wbsListEl.addEventListener("scroll", function(){
-    if(syncing) return; syncing=true;
-    var frac = scrollFrac(wbsListEl);
-    applyScrollFrac(tBody, frac);
-    applyScrollFrac(tlBodyWrap, frac);
-    endSyncSoon();
-  });
-}
 
 /* ============================= EXPORT / IMPORT ============================= */
 q("btnCsv").addEventListener("click", function(){
