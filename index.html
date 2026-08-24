@@ -60,16 +60,49 @@ body{
 #landingHero.hidden{display:none;}
 @media print{ #landingHero{display:none !important;} }
 
-/* ---------- Mobile: stack table above Gantt instead of side-by-side ----------
-   Side-by-side, the table pane's working width alone exceeds a phone screen, which
-   pushed the Gantt chart entirely off-screen with no obvious way to reach it. */
+/* ---------- Mobile: stack table above Gantt, and let the PAGE scroll instead of
+   forcing everything into one fixed viewport height ----------
+   The desktop layout locks #app to height:100vh with the workspace clipped via
+   overflow:hidden, on the assumption everything fits one screen. On a phone, the
+   toolbar alone wraps across several rows and eats most of that height, so a table
+   block plus a Gantt block stacked inside that same fixed, non-scrolling space left
+   no room for the Gantt — it wasn't broken, just clipped invisible below the fold.
+
+   These rules apply either when the viewport is actually narrow, OR when the person
+   has explicitly chosen "Phone" in the device-mode prompt (body.force-mobile) — and
+   are suppressed by an explicit "Computer" choice (body.force-desktop) even on a
+   narrow window. */
 @media (max-width: 860px){
-  .workspace{flex-direction:column;}
-  .table-pane{width:100% !important;max-width:100% !important;min-width:0;max-height:42vh;border-right:none;border-bottom:2px solid var(--line);resize:none;}
-  .timeline-pane{min-height:280px;}
-  .topbar{padding:10px 12px;}
-  .legend{display:none;}
+  html,body{height:auto;}
+  body:not(.force-desktop) #app{height:auto;min-height:100vh;}
+  body:not(.force-desktop) .workspace{flex-direction:column;overflow:visible;margin:8px;}
+  body:not(.force-desktop) .table-pane{width:100% !important;max-width:100% !important;min-width:0;height:320px;border-right:none;border-bottom:2px solid var(--line);resize:none;overflow-y:hidden;display:flex;flex-direction:column;}
+  body:not(.force-desktop) .timeline-pane{height:420px;flex:none;}
+  body:not(.force-desktop) .topbar{padding:10px 12px;}
+  body:not(.force-desktop) .legend{display:none;}
+  body:not(.force-desktop) .col-resize-handle{display:none;}
 }
+body.force-mobile{height:auto;}
+body.force-mobile #app{height:auto;min-height:100vh;}
+body.force-mobile .workspace{flex-direction:column;overflow:visible;margin:8px;}
+body.force-mobile .table-pane{width:100% !important;max-width:100% !important;min-width:0;height:320px;border-right:none;border-bottom:2px solid var(--line);resize:none;overflow-y:hidden;display:flex;flex-direction:column;}
+body.force-mobile .timeline-pane{height:420px;flex:none;}
+body.force-mobile .topbar{padding:10px 12px;}
+body.force-mobile .legend{display:none;}
+body.force-mobile .col-resize-handle{display:none;}
+
+/* Extra headroom for small phones (~5.7in / ~360px CSS width) specifically */
+@media (max-width: 380px){
+  body:not(.force-desktop) .topbar{gap:8px;}
+  body:not(.force-desktop) .topbar .brand span{display:none;}
+  body:not(.force-desktop) .field-inline input[type=text],
+  body:not(.force-desktop) .field-inline input[type=date]{width:118px;}
+  body:not(.force-desktop) .toolbar-actions button{padding:7px 9px;font-size:11.5px;}
+  body:not(.force-desktop) .modal-panel{width:92vw !important;}
+}
+body.force-mobile .topbar{gap:8px;}
+body.force-mobile .toolbar-actions button{padding:7px 9px;font-size:11.5px;}
+body.force-mobile .modal-panel{width:92vw !important;}
 
 
 
@@ -236,6 +269,23 @@ button:active{transform:translateY(1px);}
 .holiday-item{display:flex;align-items:center;justify-content:space-between;background:#F5F7FB;border:1px solid var(--line-soft);border-radius:5px;padding:5px 8px;font-size:12px;}
 .holiday-item button{background:none;color:var(--danger);font-size:14px;padding:0 4px;}
 .modal-foot{padding:12px 20px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:8px;}
+
+/* ---------- Predecessor/Successor autocomplete ---------- */
+.ac-dropdown{
+  position:absolute;z-index:80;background:#fff;border:1px solid var(--line);border-radius:6px;
+  box-shadow:0 6px 20px rgba(22,35,61,.18);max-height:240px;overflow-y:auto;min-width:220px;
+}
+.ac-dropdown.hidden{display:none;}
+.ac-item{padding:7px 10px;cursor:pointer;font-size:12.5px;display:flex;gap:8px;align-items:baseline;border-bottom:1px solid var(--line-soft);}
+.ac-item:last-child{border-bottom:none;}
+.ac-item:hover,.ac-item.active{background:var(--blue-soft);}
+.ac-item.ac-item-disabled{cursor:not-allowed;opacity:.55;}
+.ac-item.ac-item-disabled:hover{background:transparent;}
+.ac-item.ac-item-disabled .ac-id{color:var(--summary);}
+.ac-item .ac-id{font-family:'IBM Plex Mono',monospace;color:var(--blue);font-weight:700;flex:none;}
+.ac-item .ac-name{color:var(--ink-soft);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ac-empty{padding:8px 10px;font-size:12px;color:var(--ink-soft);}
+.ac-hint{padding:6px 10px;font-size:10.5px;color:var(--ink-soft);background:#F5F7FB;border-top:1px solid var(--line-soft);}
 .help-body h4{font-size:13px;text-transform:none;letter-spacing:0;color:var(--ink);font-weight:700;margin:18px 0 6px;}
 .help-body h4:first-child{margin-top:0;}
 .help-body p{font-size:13px;line-height:1.6;color:var(--ink-soft);margin:0 0 6px;}
@@ -244,6 +294,10 @@ button:active{transform:translateY(1px);}
 .help-body b{color:var(--ink);}
 .help-body .tag{background:#F5F7FB;border:1px solid var(--line);border-radius:3px;padding:1px 6px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink);}
 .radio-group{display:flex;flex-direction:column;gap:8px;}
+.field-row{display:flex;flex-direction:column;gap:3px;margin-bottom:12px;}
+.field-row label{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft);font-weight:600;}
+.field-row input{padding:7px 9px;border:1px solid var(--line);border-radius:5px;font-size:13px;color:var(--ink);}
+.field-row input:focus{border-color:var(--blue);outline:none;}
 .radio-group label{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink);}
 .col-check-grid{display:flex;flex-wrap:wrap;gap:8px 14px;}
 .col-check-grid label{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink);}
@@ -374,6 +428,7 @@ button:active{transform:translateY(1px);}
       <button class="btn-outline" id="btnLoad">Open…</button>
       <button class="btn-outline" id="btnSave">Save .json</button>
       <button class="btn-ghost" id="btnCsv">Export CSV</button>
+      <button class="btn-ghost" id="btnExcel">Export Excel</button>
       <button class="btn-ghost" id="btnPrint">Print / PDF</button>
       <button class="btn-accent" id="btnAdd">+ Activity</button>
     </div>
@@ -428,6 +483,7 @@ button:active{transform:translateY(1px);}
 </div>
 
 <input type="file" id="fileInput" accept=".json" style="display:none">
+<div id="predAutocomplete" class="ac-dropdown hidden"></div>
 
 <!-- Print / PDF options modal -->
 <div class="modal-overlay" id="printModal">
@@ -472,16 +528,31 @@ button:active{transform:translateY(1px);}
     <div class="modal-head"><h3>How to use Pocket Scheduler</h3><button id="helpClose">✕</button></div>
     <div class="modal-body help-body">
 
-      <h4>1. Building the activity list</h4>
-      <p>Add rows with <b>+ Activity</b>. Each row is either a <b>Task</b>, a <b>Milestone</b> (zero duration, shown as a diamond), or an <b>Event</b> (a fixed date you pick directly — useful for inspections, deliveries, client visits — that other activities can still depend on).</p>
+      <div style="background:#F5F7FB;border:1px solid var(--line);border-radius:6px;padding:10px 12px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+        <span style="font-size:12.5px;color:var(--ink-soft);">Layout is currently tuned for: <b id="helpDeviceModeLabel" style="color:var(--ink);">—</b></span>
+        <span style="display:flex;gap:6px;">
+          <button class="btn-outline" id="helpSwitchMobile" style="color:var(--ink);border-color:var(--line);padding:5px 10px;font-size:11.5px;">📱 Phone</button>
+          <button class="btn-outline" id="helpSwitchDesktop" style="color:var(--ink);border-color:var(--line);padding:5px 10px;font-size:11.5px;">💻 Computer</button>
+        </span>
+      </div>
 
-      <h4>2. WBS &amp; grouping</h4>
+      <h4>1. Building the activity list</h4>
+      <p>Add rows with <b>+ Activity</b>. Each row is a <b>Task</b>, a <b>Milestone</b> (zero duration, shown as a diamond), an <b>Event</b> (a fixed date you pick directly — useful for inspections, deliveries, client visits — that other activities can still depend on), or a <b>Level of Effort</b> (see below).</p>
+
+      <h4>2. Level of Effort activities</h4>
+      <p>Some activities — supervision, project management, site security — don't have a duration of their own; they simply last as long as the work they support. Set an activity's Type to <b>Level of Effort</b> and its Duration becomes automatic: give it an <b>SS</b> predecessor link to whatever it should start alongside, and an <b>FF</b> predecessor link to whatever it should finish alongside, and its Start, Finish, and Duration are all calculated from those links. For example, Supervision might have Predecessors <span class="tag">A2SS</span> (starts with Mobilization) and <span class="tag">A9FF,A10FF</span> (finishes with whichever of the last two activities finishes later).</p>
+
+      <h4>3. WBS &amp; grouping</h4>
       <p>The <b>WBS</b> column uses dot codes to build the hierarchy: <span class="tag">1</span>, <span class="tag">1.1</span>, <span class="tag">1.1.1</span>. Any row that has children automatically becomes a <b>summary row</b> — its duration, Start/Finish, predecessors and successors are disabled and instead auto-calculated from its children's dates. Rows sort automatically by WBS code.</p>
 
-      <h4>3. Duration &amp; units</h4>
+      <h4>Note on linking two peer activities to each other</h4>
+      <p>If activity B depends on A, and A also depends on B — in <i>any</i> combination of relationship types — that's a genuine circular reference, and Pocket Scheduler will flag it, the same way P6 would. This usually comes up when trying to say "these two run in parallel, and something should wait for whichever finishes later." The fix isn't to link A and B to each other — it's to link a <b>third</b>, downstream activity to <i>both</i> of them as FS predecessors. CPM automatically uses the later of the two finishes when computing that third activity's start, with no special relationship type needed.</p>
+
+
+      <h4>4. Duration &amp; units</h4>
       <p>Set a number and a unit per row: <b>h</b>ours, <b>d</b>ays, <b>w</b>eeks, or <b>m</b>onths. Internally a week counts as 5 working days and a month as roughly 20 working days, so the schedule math stays consistent regardless of which unit is most natural for a given activity.</p>
 
-      <h4>4. Predecessors &amp; Successors</h4>
+      <h4>5. Predecessors &amp; Successors</h4>
       <p>Type a comma-separated list into either column — they're two views of the same link, so editing one updates the other automatically. Format: <span class="tag">A2</span> (defaults to Finish-to-Start, no lag), or explicitly <span class="tag">A3SS+2</span>, <span class="tag">A4FF-1</span>, <span class="tag">A5SF</span>.</p>
       <ul>
         <li><b>FS</b> Finish-to-Start — the default. B can't start until A finishes.</li>
@@ -492,20 +563,77 @@ button:active{transform:translateY(1px);}
       </ul>
       <p>A row with no predecessor and/or no successor gets a small <b>!</b> badge next to its ID — that's a heads-up, not necessarily an error (every project legitimately has one open start and one open finish), but worth a glance if it shows up somewhere unexpected.</p>
 
-      <h4>5. The calendar</h4>
+      <h4>6. The calendar</h4>
       <p>Click <b>📅 Calendar</b> to set which days of the week count as working days, and to add specific holiday/closure dates. Everything downstream — Start/Finish dates, the Gantt bars, float — respects this calendar.</p>
 
-      <h4>6. Reading the Gantt chart</h4>
+      <h4>7. Reading the Gantt chart</h4>
       <p>Bars in the orange hazard-stripe pattern are on the <b>critical path</b> — any delay to them delays the whole project. Grey bars with pointed ends are summary rollups. Diamonds are milestones. Use the <b>+ / −</b> zoom buttons to change how many days are visible at once. Drag a column's right edge in the table to resize it.</p>
 
-      <h4>7. Printing &amp; exporting</h4>
+      <h4>8. Printing &amp; exporting</h4>
       <p>The <b>Print / PDF</b> button offers three layouts — <b>Table only</b>, <b>Gantt only</b>, or <b>Table + Gantt</b> side by side — plus a choice of timescale (Days through Yearly). Large schedules automatically continue across as many pages as needed, both across dates and down through activities, the same way Primavera P6 paginates a big schedule. Use <b>Export CSV</b> for a spreadsheet copy, and <b>Save .json</b> / <b>Open…</b> to back up or hand off a project file.</p>
 
-      <h4>8. Your data</h4>
+      <h4>9. Your data</h4>
       <p>Everything runs in your browser — there's no server and nothing is uploaded. Your project autosaves locally as you work, but clearing your browser's site data will erase it, so it's worth using <b>Save .json</b> for anything you don't want to risk losing.</p>
 
     </div>
     <div class="modal-foot"><button class="btn-accent" id="helpDone">Got it</button></div>
+  </div>
+</div>
+
+<!-- Device mode prompt (first visit) -->
+<div class="modal-overlay" id="deviceModal">
+  <div class="modal-panel" style="width:360px;">
+    <div class="modal-head"><h3>Quick setup</h3></div>
+    <div class="modal-body" style="text-align:center;">
+      <p style="font-size:13.5px;color:var(--ink-soft);margin:0 0 16px;">Which are you using right now? This just tunes the layout — you can switch it anytime from the Help menu.</p>
+      <div style="display:flex;gap:10px;">
+        <button class="btn-outline" id="deviceBtnMobile" style="flex:1;color:var(--ink);border-color:var(--line);padding:18px 8px;font-size:14px;">📱<br>Phone</button>
+        <button class="btn-outline" id="deviceBtnDesktop" style="flex:1;color:var(--ink);border-color:var(--line);padding:18px 8px;font-size:14px;">💻<br>Computer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- New Project setup wizard -->
+<div class="modal-overlay" id="newProjModal">
+  <div class="modal-panel" style="width:520px;">
+    <div class="modal-head"><h3>New project</h3><button id="npClose">✕</button></div>
+    <div class="modal-body">
+      <h4>Project</h4>
+      <div class="field-row">
+        <label>Project name</label>
+        <input type="text" id="npName" class="mono" value="New Project">
+      </div>
+      <div class="field-row">
+        <label>Start date</label>
+        <input type="date" id="npStartDate">
+      </div>
+
+      <h4>Activity numbering</h4>
+      <div class="radio-group">
+        <label><input type="radio" name="npNumMode" value="auto" checked> Auto — A1, A2, A3…</label>
+        <label><input type="radio" name="npNumMode" value="custom"> Custom prefix &amp; increment</label>
+      </div>
+      <div id="npCustomNumFields" class="hidden" style="display:flex;gap:10px;margin-top:8px;">
+        <div class="field-row" style="flex:1;"><label>Prefix</label><input type="text" id="npPrefix" class="mono" value="A-"></div>
+        <div class="field-row" style="flex:1;"><label>Start at</label><input type="number" id="npStartNum" class="mono" value="1000"></div>
+        <div class="field-row" style="flex:1;"><label>Increment</label><input type="number" id="npIncrement" class="mono" value="10"></div>
+      </div>
+      <div style="font-size:11.5px;color:var(--ink-soft);margin-top:6px;">Preview: first few IDs will be <span class="tag mono" id="npPreview">A1, A2, A3</span></div>
+
+      <h4>Calendar</h4>
+      <div class="dow-grid" id="npDowGrid"></div>
+      <div class="holiday-row" style="margin-top:10px;">
+        <input type="date" id="npHolDate">
+        <input type="text" id="npHolLabel" placeholder="Label (optional)">
+        <button class="btn-outline" id="npHolAdd" style="background:var(--blue);color:#fff;">Add</button>
+      </div>
+      <div class="holiday-list" id="npHolidayList"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-outline" style="color:var(--ink);border-color:var(--line);" id="npCancel">Cancel</button>
+      <button class="btn-accent" id="npCreate">Create project</button>
+    </div>
   </div>
 </div>
 
@@ -542,7 +670,7 @@ var state = {
   calendar: { workDays: [false,true,true,true,true,true,false], holidays: [] }, // index 0=Sun..6=Sat
   dayWidth: 22,
   colWidths: Object.assign({}, DEFAULT_COL_WIDTHS),
-  nextSeq: 1,
+  numbering: { prefix: "A", start: 1, increment: 1, next: 1 },
   activities: []   // {id, wbs, name, type:'task'|'milestone'|'event', duration, durationUnit:'h'|'d'|'w'|'m', qty, unit, predecessors, fixedDate}
 };
 
@@ -550,7 +678,9 @@ function todayISO(){ var d=new Date(); return d.getFullYear()+"-"+pad(d.getMonth
 function pad(n){ return n<10 ? "0"+n : ""+n; }
 
 function newActivity(overrides){
-  var id = "A" + state.nextSeq++;
+  var num = state.numbering;
+  var id = num.prefix + num.next;
+  num.next += num.increment;
   var a = {id:id, wbs:"1", name:"New activity", type:"task", duration:1, durationUnit:"d", qty:"", unit:"", predecessors:"", fixedDate:""};
   if(overrides) Object.assign(a, overrides);
   return a;
@@ -561,7 +691,7 @@ function findActivity(id){ return state.activities.find(function(a){return a.id=
 function loadDemo(){
   state.projectName = "Kitchen Renovation — 24 Maple St";
   state.startDate = todayISO();
-  state.nextSeq = 1;
+  state.numbering = { prefix: "A", start: 1, increment: 1, next: 1 };
   state.calendar = { workDays: [false,true,true,true,true,true,false], holidays: [] };
   state.activities = [
     newActivity({wbs:"1", name:"Kitchen Renovation"}),
@@ -603,7 +733,7 @@ function isSummary(act, all){
 function wbsLevel(w){ return (w||"1").split(".").length; }
 
 /* ============================= Predecessor token parsing ============================= */
-var PRED_RE = /^([A-Za-z0-9]+?)(FS|SS|FF|SF)?([+-]\d+)?$/i;
+var PRED_RE = /^(.+?)(?:(FS|SS|FF|SF)([+-]\d+)?)?$/i;
 function parsePredList(raw){
   if(!raw) return [];
   return raw.split(",").map(function(t){return t.trim();}).filter(Boolean).map(function(tok){
@@ -786,6 +916,23 @@ function computeSchedule(){
   var ES={}, EF={};
   order.forEach(function(id){
     var t = byId[id];
+    if(t.type==="loe"){
+      // Level of Effort: no independent duration — spans whatever it's linked to.
+      // SS/FS-type predecessors drive its Start; FF/SF-type predecessors drive its Finish directly.
+      var esCandidates=[], efCandidates=[];
+      predMap[id].forEach(function(p){
+        var pES=ES[p.id], pEF=EF[p.id];
+        if(p.type==="SS") esCandidates.push(pES + p.lag);
+        else if(p.type==="FF") efCandidates.push(pEF + p.lag);
+        else if(p.type==="SF") efCandidates.push(pES + p.lag);
+        else esCandidates.push(pEF + p.lag); // FS (default)
+      });
+      var loeEs = esCandidates.length ? Math.max.apply(null, esCandidates) : 0;
+      var loeEf = efCandidates.length ? Math.max.apply(null, efCandidates) : loeEs;
+      if(loeEf < loeEs) loeEf = loeEs;
+      ES[id] = loeEs; EF[id] = loeEf;
+      return;
+    }
     var dur = t.type==="milestone" ? 0 : toWorkDays(t.duration, t.durationUnit);
     if(t.type==="event"){
       var es = dateToOffset(state.startDate, t.fixedDate || state.startDate, cal);
@@ -811,7 +958,7 @@ function computeSchedule(){
   var LF={}, LS={};
   order.slice().reverse().forEach(function(id){
     var t = byId[id];
-    var dur = t.type==="milestone" ? 0 : toWorkDays(t.duration, t.durationUnit);
+    var dur = t.type==="milestone" ? 0 : (t.type==="loe" ? (EF[id]-ES[id]) : toWorkDays(t.duration, t.durationUnit));
     var succs = succMap[id];
     var lf;
     if(succs.length===0){ lf = projFinish; }
@@ -833,10 +980,21 @@ function computeSchedule(){
 
   var taskResults = {}; var openCount=0;
   tasks.forEach(function(t){
-    var dur = t.type==="milestone" ? 0 : toWorkDays(t.duration, t.durationUnit);
+    var dur = t.type==="milestone" ? 0 : (t.type==="loe" ? (EF[t.id]-ES[t.id]) : toWorkDays(t.duration, t.durationUnit));
     var float = LS[t.id]-ES[t.id];
-    var openStart = t.type!=="event" && predMap[t.id].length===0;
-    var openFinish = succMap[t.id].length===0;
+    var openStart, openFinish;
+    if(t.type==="loe"){
+      // LOE needs both an SS/FS-type link (defines its start) and an FF/SF-type link (defines its finish) —
+      // missing either one silently produces a wrong/zero-length span, so flag it explicitly rather than
+      // reusing the generic "no predecessor at all" check, which wouldn't catch a partially-linked LOE.
+      var hasStartLink = predMap[t.id].some(function(p){ return p.type==="SS" || p.type==="FS"; });
+      var hasFinishLink = predMap[t.id].some(function(p){ return p.type==="FF" || p.type==="SF"; });
+      openStart = !hasStartLink;
+      openFinish = !hasFinishLink;
+    } else {
+      openStart = t.type!=="event" && predMap[t.id].length===0;
+      openFinish = succMap[t.id].length===0;
+    }
     if(t.type!=="event" && (openStart||openFinish)) openCount++;
     taskResults[t.id] = {
       id:t.id, es:ES[t.id], ef:EF[t.id], ls:LS[t.id], lf:LF[t.id],
@@ -873,11 +1031,23 @@ function syncTopFields(){
 }
 
 /* ---------- Resizable columns ---------- */
+var MOBILE_BREAKPOINT = 860;
+var deviceMode = null; // "mobile" | "desktop" | null (null = auto-detect from viewport width)
+function isMobileViewport(){
+  if(deviceMode==="mobile") return true;
+  if(deviceMode==="desktop") return false;
+  return window.innerWidth <= MOBILE_BREAKPOINT;
+}
+function applyDeviceModeClass(){
+  document.body.classList.toggle("force-mobile", deviceMode==="mobile");
+  document.body.classList.toggle("force-desktop", deviceMode==="desktop");
+}
 function applyColWidths(){
   var css = "";
   var total = 26; // del column
+  var mobile = isMobileViewport();
   Object.keys(COL_CLASS).forEach(function(k){
-    var w = state.colWidths[k] || DEFAULT_COL_WIDTHS[k];
+    var w = mobile ? DEFAULT_COL_WIDTHS[k] : (state.colWidths[k] || DEFAULT_COL_WIDTHS[k]);
     css += "."+COL_CLASS[k]+"{width:"+w+"px !important; flex:none !important;}\n";
     total += w;
   });
@@ -890,6 +1060,7 @@ function applyColWidths(){
 function wireColumnResize(){
   document.querySelectorAll(".col-resize-handle").forEach(function(handle){
     handle.addEventListener("mousedown", function(e){
+      if(isMobileViewport()) return; // dragging a 6px handle with a finger is unreliable; mobile always uses default widths
       e.preventDefault(); e.stopPropagation();
       var col = handle.dataset.col;
       var startX = e.clientX;
@@ -911,6 +1082,10 @@ function wireColumnResize(){
     });
   });
 }
+window.addEventListener("resize", function(){
+  clearTimeout(window._colWidthResizeTimer);
+  window._colWidthResizeTimer = setTimeout(applyColWidths, 150);
+});
 
 /* Full structural rebuild: only on add/delete/reorder/load */
 function renderTableStructure(){
@@ -929,8 +1104,8 @@ function buildRow(a){
   row.className = "row";
   row.dataset.id = a.id;
 
-  var typeOptions = ["task","milestone","event"].map(function(v){
-    var label = v==="task"?"Task Dependent":v==="milestone"?"Milestone":"Event (fixed date)";
+  var typeOptions = ["task","milestone","event","loe"].map(function(v){
+    var label = v==="task"?"Task Dependent":v==="milestone"?"Milestone":v==="event"?"Event (fixed date)":"Level of Effort";
     return '<option value="'+v+'"'+(a.type===v?" selected":"")+'>'+label+'</option>';
   }).join("");
   var unitOptions = ["h","d","w","m"].map(function(v){
@@ -947,7 +1122,7 @@ function buildRow(a){
     '<div class="col-durunit"><select data-f="durationUnit">'+unitOptions+'</select></div>' +
     '<div class="col-qty"><input class="mono" data-f="qty" value="'+esc(a.qty)+'"></div>' +
     '<div class="col-unit"><input class="mono" data-f="unit" value="'+esc(a.unit)+'"></div>' +
-    '<div class="col-pred"><input class="mono" data-f="predecessors" value="'+esc(a.predecessors)+'" placeholder="e.g. A2FS+1"></div>' +
+    '<div class="col-pred"><input class="mono" data-f="predecessors" value="'+esc(a.predecessors)+'" placeholder="'+(a.type==="loe"?"e.g. A2SS,A9FF":"e.g. A2FS+1")+'"></div>' +
     '<div class="col-succ"><input class="mono" data-f="successors" value="'+esc(computeSuccessorsRaw(a.id))+'" placeholder="e.g. A5"></div>' +
     '<div class="col-start"><span class="mono" data-el="startComputed"></span><input type="date" class="mono hidden" data-f="fixedDate" value="'+esc(a.fixedDate)+'"></div>' +
     '<div class="col-finish"><span class="mono" data-el="finishComputed"></span></div>' +
@@ -980,11 +1155,16 @@ function patchTable(){
 
     // duration & unit
     var durInput = row.querySelector('[data-f="duration"]');
-    if(durInput && durInput!==active) durInput.value = a.type==="milestone" ? 0 : a.duration;
-    durInput.disabled = summary || a.type==="milestone";
+    var isLoe = a.type==="loe";
+    if(durInput!==active){
+      if(summary || isLoe){ durInput.value = (res && !schedule.error) ? Math.round((res.ef-res.es)*100)/100 : ""; }
+      else { durInput.value = a.type==="milestone" ? 0 : a.duration; }
+    }
+    durInput.disabled = summary || a.type==="milestone" || isLoe;
+    durInput.title = isLoe ? "Calculated from linked activities (Level of Effort)" : summary ? "Calculated from child activities" : "";
     var durUnitSel = row.querySelector('[data-f="durationUnit"]');
-    if(durUnitSel && durUnitSel!==active) durUnitSel.value = a.durationUnit;
-    durUnitSel.disabled = summary || a.type==="milestone";
+    if(durUnitSel && durUnitSel!==active) durUnitSel.value = (summary || isLoe) ? "d" : a.durationUnit;
+    durUnitSel.disabled = summary || a.type==="milestone" || isLoe;
 
     // qty/unit
     var qtyInput = row.querySelector('[data-f="qty"]'); qtyInput.disabled = summary;
@@ -993,6 +1173,7 @@ function patchTable(){
     // predecessors
     var predInput = row.querySelector('[data-f="predecessors"]');
     predInput.disabled = summary || a.type==="event";
+    predInput.placeholder = isLoe ? "e.g. A2SS,A9FF" : "e.g. A2FS+1";
     if(predInput!==active) predInput.value = a.predecessors;
 
     // successors (derived from others; refresh unless focused)
@@ -1041,9 +1222,9 @@ function patchTable(){
     if(!summary && !schedule.error && schedule.tasks[a.id] && a.type!=="event" && (schedule.tasks[a.id].openStart || schedule.tasks[a.id].openFinish)){
       openBadge.classList.remove("hidden");
       var msgs=[];
-      if(schedule.tasks[a.id].openStart) msgs.push("no predecessor (open start)");
-      if(schedule.tasks[a.id].openFinish) msgs.push("no successor (open finish)");
-      openBadge.title = "Open activity: " + msgs.join(", ");
+      if(schedule.tasks[a.id].openStart) msgs.push(isLoe ? "no SS/FS link — Start defaults to project start" : "no predecessor (open start)");
+      if(schedule.tasks[a.id].openFinish) msgs.push(isLoe ? "no FF/SF link — Finish defaults to Start (0 duration)" : "no successor (open finish)");
+      openBadge.title = (isLoe ? "Level of Effort: " : "Open activity: ") + msgs.join(", ");
     } else {
       openBadge.classList.add("hidden");
     }
@@ -1212,6 +1393,125 @@ q("tableBody").addEventListener("input", function(e){
   recalcLight();
 });
 
+/* ---------- Predecessor/Successor autocomplete ---------- */
+var acEl = q("predAutocomplete");
+var acState = { input:null, items:[], activeIndex:-1 };
+
+function acComputeSuggestions(query, excludeId){
+  query = (query||"").trim().toLowerCase();
+  var matches = state.activities.filter(function(a){
+    if(a.id===excludeId) return false;
+    if(!query) return true;
+    return a.id.toLowerCase().indexOf(query)>-1 || (a.name||"").toLowerCase().indexOf(query)>-1;
+  });
+  // Browsing with an empty query stays focused on activities you could actually pick;
+  // once you're searching for something specific, still surface summary rows (matched by
+  // WBS/name) so a real match never silently looks like "nothing found" — just mark them
+  // as non-selectable rather than hiding them entirely.
+  if(!query) matches = matches.filter(function(a){ return !isSummary(a, state.activities); });
+  return matches.slice(0, 30).map(function(a){ return {id:a.id, name:a.name, summary:isSummary(a, state.activities)}; });
+}
+function acLastSegment(value){
+  var parts = (value||"").split(",");
+  return parts[parts.length-1].replace(/^\s+/,"");
+}
+function acPosition(inputEl){
+  var rect = inputEl.getBoundingClientRect();
+  var dropdownH = Math.min(acEl.scrollHeight || 240, 240);
+  var spaceBelow = window.innerHeight - rect.bottom;
+  var openAbove = spaceBelow < dropdownH + 10 && rect.top > dropdownH + 10;
+  acEl.style.left = (rect.left + window.scrollX) + "px";
+  acEl.style.top = openAbove
+    ? (rect.top + window.scrollY - dropdownH - 3) + "px"
+    : (rect.bottom + window.scrollY + 3) + "px";
+  acEl.style.width = Math.max(rect.width, 230) + "px";
+}
+function acRender(){
+  if(acState.items.length===0){
+    acEl.innerHTML = '<div class="ac-empty">No matching activities</div>';
+    return;
+  }
+  acEl.innerHTML = acState.items.map(function(a, i){
+    if(a.summary){
+      return '<div class="ac-item ac-item-disabled" title="Summary rows are calculated from their children and can\'t be used as a predecessor"><span class="ac-id">'+esc(a.id)+'</span><span class="ac-name">'+esc(a.name)+' — WBS summary</span></div>';
+    }
+    return '<div class="ac-item'+(i===acState.activeIndex?' active':'')+'" data-ac-id="'+esc(a.id)+'"><span class="ac-id">'+esc(a.id)+'</span><span class="ac-name">'+esc(a.name)+'</span></div>';
+  }).join("") + '<div class="ac-hint">Tip: add FS/SS/FF/SF and +lag after picking, e.g. A2FS+1</div>';
+}
+function acShow(inputEl){
+  var row = inputEl.closest(".row");
+  if(!row) return;
+  acState.input = inputEl;
+  acState.items = acComputeSuggestions(acLastSegment(inputEl.value), row.dataset.id);
+  acState.activeIndex = -1;
+  acRender();
+  acEl.classList.remove("hidden"); // must be visible before measuring its height for positioning
+  acPosition(inputEl);
+}
+function acHide(){
+  acEl.classList.add("hidden");
+  acState.input = null; acState.items = []; acState.activeIndex = -1;
+}
+function acSelect(id){
+  var inputEl = acState.input;
+  if(!inputEl) return;
+  var priorParts = inputEl.value.split(",").slice(0,-1).map(function(p){return p.trim();}).filter(Boolean);
+  priorParts.push(id);
+  inputEl.value = priorParts.join(",");
+  inputEl.dispatchEvent(new Event("input", {bubbles:true}));
+  acHide();
+  inputEl.focus();
+  var len = inputEl.value.length;
+  inputEl.setSelectionRange(len, len);
+}
+function acStepActive(dir){
+  if(!acState.items.length) return;
+  var i = acState.activeIndex;
+  for(var n=0; n<acState.items.length; n++){
+    i += dir;
+    if(i<0) i = acState.items.length-1;
+    if(i>=acState.items.length) i = 0;
+    if(!acState.items[i].summary){ acState.activeIndex = i; return; }
+  }
+}
+q("tableBody").addEventListener("focusin", function(e){
+  var f = e.target.dataset && e.target.dataset.f;
+  if(f==="predecessors" || f==="successors") acShow(e.target);
+});
+q("tableBody").addEventListener("input", function(e){
+  var f = e.target.dataset && e.target.dataset.f;
+  if(f==="predecessors" || f==="successors") acShow(e.target);
+});
+q("tableBody").addEventListener("focusout", function(e){
+  var f = e.target.dataset && e.target.dataset.f;
+  if(f==="predecessors" || f==="successors"){
+    setTimeout(function(){ if(acState.input!==document.activeElement) acHide(); }, 120);
+  }
+});
+q("tableBody").addEventListener("keydown", function(e){
+  var f = e.target.dataset && e.target.dataset.f;
+  if(!(f==="predecessors" || f==="successors")) return;
+  if(acEl.classList.contains("hidden")) return;
+  if(e.key==="ArrowDown"){ e.preventDefault(); acStepActive(1); acRender(); }
+  else if(e.key==="ArrowUp"){ e.preventDefault(); acStepActive(-1); acRender(); }
+  else if(e.key==="Enter"){
+    var item = acState.items[acState.activeIndex];
+    if(item && !item.summary){ e.preventDefault(); acSelect(item.id); }
+  }
+  else if(e.key==="Escape"){ acHide(); }
+});
+acEl.addEventListener("mousedown", function(e){
+  var item = e.target.closest(".ac-item");
+  if(!item || item.classList.contains("ac-item-disabled")) return;
+  e.preventDefault();
+  acSelect(item.dataset.acId);
+});
+window.addEventListener("scroll", function(e){
+  if(!acState.input) return;
+  if(acEl===e.target || acEl.contains(e.target)) return; // the dropdown's own internal scroll shouldn't affect it
+  acPosition(acState.input); // keep it anchored to the input as the table/page/gantt scroll underneath it
+}, true);
+
 q("tableBody").addEventListener("change", function(e){
   var t = e.target;
   if(t.dataset.f==="wbs"){
@@ -1244,7 +1544,15 @@ function addActivityAtEnd(){
   recalcFull();
   setTimeout(function(){
     var el = document.querySelector('.row[data-id="'+a.id+'"] .col-name input');
-    if(el){ el.focus(); el.select(); }
+    if(el){
+      // scrollIntoView always runs, regardless of focus — iOS Safari can silently ignore a
+      // focus() call this far from the original tap (it requires focus to happen inside the
+      // direct gesture handler to reliably raise the keyboard), so without this a newly added
+      // row could end up off-screen with no visible sign anything happened.
+      el.scrollIntoView({behavior:"smooth", block:"center"});
+      el.focus();
+      el.select();
+    }
   }, 30);
 }
 q("btnAdd").addEventListener("click", addActivityAtEnd);
@@ -1255,10 +1563,8 @@ q("btnDemo").addEventListener("click", function(){
   loadDemo();
 });
 q("btnNew").addEventListener("click", function(){
-  if(!confirm("Start a new blank project? Unsaved changes will be lost (use Save .json first if needed).")) return;
-  state.activities = []; state.nextSeq = 1; state.projectName = "New Project"; state.startDate = todayISO();
-  state.calendar = { workDays:[false,true,true,true,true,true,false], holidays:[] };
-  syncTopFields(); recalcFull();
+  if(state.activities.length && !confirm("Start a new project? Unsaved changes will be lost (use Save .json first if needed).")) return;
+  openNewProjectWizard();
 });
 
 q("projName").addEventListener("input", function(e){ state.projectName=e.target.value; saveLocal(); });
@@ -1301,7 +1607,26 @@ function renderHolidayList(){
 q("btnCalendar").addEventListener("click", function(){ renderCalendarModal(); q("calModal").classList.add("open"); });
 
 /* ---------- Help modal ---------- */
-q("btnHelp").addEventListener("click", function(){ q("helpModal").classList.add("open"); });
+/* ---------- Device mode (Phone / Computer) ---------- */
+var DEVICE_MODE_KEY = "pocket-scheduler-device-mode";
+function setDeviceMode(mode){
+  deviceMode = mode;
+  try{ localStorage.setItem(DEVICE_MODE_KEY, mode); }catch(e){}
+  applyDeviceModeClass();
+  updateHelpDeviceLabel();
+  applyColWidths();
+  renderTimeline();
+}
+function updateHelpDeviceLabel(){
+  var el = q("helpDeviceModeLabel");
+  if(el) el.textContent = deviceMode==="mobile" ? "Phone" : deviceMode==="desktop" ? "Computer" : "Auto (based on window size)";
+}
+q("deviceBtnMobile").addEventListener("click", function(){ setDeviceMode("mobile"); q("deviceModal").classList.remove("open"); });
+q("deviceBtnDesktop").addEventListener("click", function(){ setDeviceMode("desktop"); q("deviceModal").classList.remove("open"); });
+q("helpSwitchMobile").addEventListener("click", function(){ setDeviceMode("mobile"); });
+q("helpSwitchDesktop").addEventListener("click", function(){ setDeviceMode("desktop"); });
+
+q("btnHelp").addEventListener("click", function(){ updateHelpDeviceLabel(); q("helpModal").classList.add("open"); });
 q("helpClose").addEventListener("click", function(){ q("helpModal").classList.remove("open"); });
 q("helpDone").addEventListener("click", function(){ q("helpModal").classList.remove("open"); });
 q("helpModal").addEventListener("click", function(e){ if(e.target.id==="helpModal") q("helpModal").classList.remove("open"); });
@@ -1315,6 +1640,93 @@ q("holAdd").addEventListener("click", function(){
   q("holDate").value = ""; q("holLabel").value = "";
   renderHolidayList();
   recalcLight();
+});
+
+/* ---------- New Project wizard ---------- */
+var npDraftCalendar = null;
+function npUpdatePreview(){
+  var mode = document.querySelector('input[name="npNumMode"]:checked').value;
+  var prefix = "A", start = 1, incr = 1;
+  if(mode==="custom"){
+    prefix = q("npPrefix").value || "A";
+    start = parseInt(q("npStartNum").value,10); if(isNaN(start)) start = 1;
+    incr = parseInt(q("npIncrement").value,10); if(isNaN(incr) || incr===0) incr = 1;
+  }
+  var vals = [start, start+incr, start+incr*2].map(function(n){ return prefix+n; });
+  q("npPreview").textContent = vals.join(", ");
+}
+function npRenderDowGrid(){
+  var dowNames = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  var grid = q("npDowGrid");
+  grid.innerHTML = dowNames.map(function(name,i){
+    return '<label class="dow-chip"><input type="checkbox" data-dow="'+i+'" '+(npDraftCalendar.workDays[i]?"checked":"")+'>'+name+'</label>';
+  }).join("");
+  grid.querySelectorAll('input[type=checkbox]').forEach(function(cb){
+    cb.addEventListener("change", function(){ npDraftCalendar.workDays[parseInt(cb.dataset.dow,10)] = cb.checked; });
+  });
+}
+function npRenderHolidayList(){
+  var list = q("npHolidayList");
+  var sorted = npDraftCalendar.holidays.slice().sort();
+  if(sorted.length===0){ list.innerHTML = '<div style="font-size:12px;color:var(--ink-soft);">No holidays added.</div>'; return; }
+  list.innerHTML = sorted.map(function(h){
+    return '<div class="holiday-item"><span class="mono">'+h+'</span><button data-np-del-hol="'+h+'">✕</button></div>';
+  }).join("");
+  list.querySelectorAll('[data-np-del-hol]').forEach(function(btn){
+    btn.addEventListener("click", function(){
+      npDraftCalendar.holidays = npDraftCalendar.holidays.filter(function(h){return h!==btn.dataset.npDelHol;});
+      npRenderHolidayList();
+    });
+  });
+}
+function openNewProjectWizard(){
+  q("npName").value = "New Project";
+  q("npStartDate").value = todayISO();
+  document.querySelector('input[name="npNumMode"][value="auto"]').checked = true;
+  q("npCustomNumFields").classList.add("hidden");
+  q("npPrefix").value = "A-"; q("npStartNum").value = 1000; q("npIncrement").value = 10;
+  npDraftCalendar = { workDays: [false,true,true,true,true,true,false], holidays: [] };
+  npRenderDowGrid();
+  npRenderHolidayList();
+  npUpdatePreview();
+  q("newProjModal").classList.add("open");
+}
+document.querySelectorAll('input[name="npNumMode"]').forEach(function(r){
+  r.addEventListener("change", function(){
+    var mode = document.querySelector('input[name="npNumMode"]:checked').value;
+    q("npCustomNumFields").classList.toggle("hidden", mode!=="custom");
+    npUpdatePreview();
+  });
+});
+["npPrefix","npStartNum","npIncrement"].forEach(function(id){ q(id).addEventListener("input", npUpdatePreview); });
+q("npHolAdd").addEventListener("click", function(){
+  var d = q("npHolDate").value;
+  if(!d) return;
+  if(npDraftCalendar.holidays.indexOf(d)===-1) npDraftCalendar.holidays.push(d);
+  q("npHolDate").value = ""; q("npHolLabel").value = "";
+  npRenderHolidayList();
+});
+q("npClose").addEventListener("click", function(){ q("newProjModal").classList.remove("open"); });
+q("npCancel").addEventListener("click", function(){ q("newProjModal").classList.remove("open"); });
+q("newProjModal").addEventListener("click", function(e){ if(e.target.id==="newProjModal") q("newProjModal").classList.remove("open"); });
+
+q("npCreate").addEventListener("click", function(){
+  var mode = document.querySelector('input[name="npNumMode"]:checked').value;
+  var numbering = { prefix:"A", start:1, increment:1, next:1 };
+  if(mode==="custom"){
+    var prefix = q("npPrefix").value.trim() || "A";
+    var start = parseInt(q("npStartNum").value,10); if(isNaN(start)) start = 1;
+    var incr = parseInt(q("npIncrement").value,10); if(isNaN(incr) || incr===0) incr = 1;
+    numbering = { prefix:prefix, start:start, increment:incr, next:start };
+  }
+  state.activities = [];
+  state.projectName = q("npName").value.trim() || "New Project";
+  state.startDate = q("npStartDate").value || todayISO();
+  state.numbering = numbering;
+  state.calendar = npDraftCalendar;
+  syncTopFields();
+  recalcFull();
+  q("newProjModal").classList.remove("open");
 });
 
 /* scroll sync (vertical only; horizontal scroll of table is native via table-pane overflow-x) */
@@ -1347,7 +1759,8 @@ q("btnCsv").addEventListener("click", function(){
         openTxt = flags.join("/");
       }
     }
-    rows.push([a.wbs,a.id,a.type,a.name,a.type==="milestone"?0:a.duration,a.durationUnit,a.qty,a.unit,a.predecessors,computeSuccessorsRaw(a.id),startTxt,finishTxt,floatTxt,critTxt,openTxt]);
+    var durTxt = (summary||a.type==="loe") ? ((res && !schedule.error) ? Math.round((res.ef-res.es)*100)/100 : "") : (a.type==="milestone"?0:a.duration);
+    rows.push([a.wbs,a.id,a.type,a.name,durTxt,(summary||a.type==="loe")?"d":a.durationUnit,a.qty,a.unit,a.predecessors,computeSuccessorsRaw(a.id),startTxt,finishTxt,floatTxt,critTxt,openTxt]);
   });
   var csv = rows.map(function(r){
     return r.map(function(v){
@@ -1357,6 +1770,144 @@ q("btnCsv").addEventListener("click", function(){
     }).join(",");
   }).join("\n");
   downloadBlob(csv, (state.projectName||"schedule").replace(/[^\w\-]+/g,"_")+".csv", "text/csv");
+});
+
+/* ---------- Export Excel (.xlsx with a colored Gantt chart) ----------
+   Loaded on demand from a CDN the first time it's used, so the app itself has no dependency
+   on it at load time — everything else in Pocket Scheduler works fully offline regardless. */
+function loadExcelJS(){
+  return new Promise(function(resolve, reject){
+    if(window.ExcelJS){ resolve(); return; }
+    var s = document.createElement("script");
+    s.src = "https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js";
+    s.onload = function(){ resolve(); };
+    s.onerror = function(){ reject(new Error("Could not load the Excel export library — check your internet connection and try again. (Your project data itself never leaves your device; only this one-time library download needs a connection.)")); };
+    document.head.appendChild(s);
+  });
+}
+
+async function buildAndDownloadExcel(){
+  if(schedule.error){ alert("Fix the predecessor errors shown above before exporting to Excel."); return; }
+
+  var wb = new ExcelJS.Workbook();
+  wb.creator = "Pocket Scheduler";
+  wb.created = new Date();
+  var ws = wb.addWorksheet("Schedule", { views: [{ state: "frozen", xSplit: 4, ySplit: 1 }] });
+
+  var colDefs = [
+    {header:"WBS", width:8}, {header:"ID", width:7}, {header:"Type", width:10}, {header:"Activity", width:28},
+    {header:"Duration", width:9}, {header:"Qty", width:7}, {header:"UOM", width:7},
+    {header:"Predecessors", width:14}, {header:"Successors", width:14},
+    {header:"Start", width:11}, {header:"Finish", width:11}, {header:"Float", width:7}, {header:"Critical", width:8}
+  ];
+  ws.columns = colDefs;
+
+  var headerRow = ws.getRow(1);
+  headerRow.height = 42;
+  headerRow.eachCell(function(cell){
+    cell.font = {name:"Arial", size:10, bold:true, color:{argb:"FFFFFFFF"}};
+    cell.fill = {type:"pattern", pattern:"solid", fgColor:{argb:"FF16233D"}};
+    cell.alignment = {vertical:"middle", wrapText:true};
+  });
+
+  var all = sortedActivities();
+  var GANTT_START_COL = colDefs.length + 2; // one spacer column
+  var totalCalDays = Math.max(calendarOffsetOf(schedule.projectSpanDays), 1) + 3;
+
+  for(var d = 0; d < totalCalDays; d++){
+    var dt = calDate(d);
+    var hCell = headerRow.getCell(GANTT_START_COL + d);
+    hCell.value = dt;
+    hCell.numFmt = "d-mmm";
+    hCell.font = {name:"Arial", size:8, bold:true, color:{argb:"FFFFFFFF"}};
+    hCell.fill = {type:"pattern", pattern:"solid", fgColor:{argb:"FF16233D"}};
+    hCell.alignment = {textRotation:90, horizontal:"center", vertical:"bottom"};
+    ws.getColumn(GANTT_START_COL + d).width = 2.6;
+  }
+
+  var rowIdx = 2;
+  all.forEach(function(a){
+    var summary = isSummary(a, state.activities);
+    var res = summary ? schedule.summaries[a.id] : schedule.tasks[a.id];
+    var row = ws.getRow(rowIdx);
+    var vals = [
+      a.wbs, a.id,
+      summary ? "Summary" : (a.type==="milestone"?"Milestone":a.type==="event"?"Event":a.type==="loe"?"Level of Effort":"Task"),
+      a.name,
+      summary||a.type==="loe" ? summaryDurationText(res) : fmtDurationText(a),
+      summary ? "" : a.qty,
+      summary ? "" : a.unit,
+      summary ? "" : a.predecessors,
+      summary ? "" : computeSuccessorsRaw(a.id),
+      "", "", "", ""
+    ];
+    for(var vi=0; vi<vals.length; vi++){ if(vals[vi]!=="") row.getCell(vi+1).value = vals[vi]; }
+
+    var critFlag = false;
+    if(res){
+      var sd = offsetToDate(state.startDate, res.es, state.calendar);
+      var fd = offsetToDate(state.startDate, Math.max(res.es, res.ef-1), state.calendar);
+      row.getCell(10).value = sd; row.getCell(10).numFmt = "dd-mmm-yy";
+      row.getCell(11).value = fd; row.getCell(11).numFmt = "dd-mmm-yy";
+      if(!summary && schedule.tasks[a.id]){
+        row.getCell(12).value = a.type==="event" ? "fixed" : schedule.tasks[a.id].float;
+        row.getCell(13).value = schedule.tasks[a.id].critical ? "Y" : "N";
+        critFlag = schedule.tasks[a.id].critical;
+      } else if(summary){
+        critFlag = res.critical;
+      }
+    }
+
+    row.eachCell({includeEmpty:false}, function(cell){
+      if(cell.col < GANTT_START_COL){
+        cell.font = summary ? {name:"Arial", size:10, bold:true} : {name:"Arial", size:10};
+        if(summary) cell.fill = {type:"pattern", pattern:"solid", fgColor:{argb:"FFF1F3F8"}};
+        if(cell.col===13 && critFlag && !summary) cell.font = {name:"Arial", size:10, bold:true, color:{argb:"FFD5301F"}};
+      }
+    });
+
+    if(res){
+      var esCal = calendarOffsetOf(res.es);
+      var efCal = a.type==="milestone" ? esCal : calendarOffsetOf(Math.max(res.ef, res.es+0.001));
+      var fillColor = summary ? "FF7C8AA5" : (a.type==="milestone" ? "FF16233D" : (critFlag ? "FFFF6B35" : "FF2F6FED"));
+      var d0 = Math.max(0, Math.floor(esCal)), d1 = Math.min(totalCalDays-1, Math.ceil(efCal));
+      for(var dd = d0; dd <= d1; dd++){
+        row.getCell(GANTT_START_COL + dd).fill = {type:"pattern", pattern:"solid", fgColor:{argb:fillColor}};
+      }
+    }
+    for(var dw = 0; dw < totalCalDays; dw++){
+      var dtw = calDate(dw);
+      var isWknd = !state.calendar.workDays[dtw.getDay()];
+      var isHol = state.calendar.holidays.indexOf(dateISO(dtw)) > -1;
+      var wcell = row.getCell(GANTT_START_COL + dw);
+      if((isWknd || isHol) && !wcell.fill){
+        wcell.fill = {type:"pattern", pattern:"solid", fgColor:{argb: isHol ? "FFF6D9C9" : "FFEEF1F7"}};
+      }
+    }
+    rowIdx++;
+  });
+
+  var buffer = await wb.xlsx.writeBuffer();
+  var blob = new Blob([buffer], {type:"application/octet-stream"});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement("a");
+  a.href = url; a.download = (state.projectName||"schedule").replace(/[^\w\-]+/g,"_")+".xlsx";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+}
+
+q("btnExcel").addEventListener("click", async function(){
+  var btn = q("btnExcel");
+  var origText = btn.textContent;
+  btn.textContent = "Preparing…"; btn.disabled = true;
+  try{
+    await loadExcelJS();
+    await buildAndDownloadExcel();
+  }catch(err){
+    alert("Excel export failed: " + (err && err.message ? err.message : "Unknown error."));
+  }finally{
+    btn.textContent = origText; btn.disabled = false;
+  }
 });
 
 /* ---------- Print / PDF ---------- */
@@ -1422,6 +1973,10 @@ q("printGo").addEventListener("click", function(){
 
 function fmtDurationText(a){
   return (a.type==="milestone"?0:a.duration) + a.durationUnit;
+}
+function summaryDurationText(res){
+  if(!res || schedule.error) return "";
+  return (Math.round((res.ef-res.es)*100)/100) + "d";
 }
 
 /* ---------- Paginated print engine (P6-style: frozen ID columns repeat on every page,
@@ -1489,9 +2044,9 @@ function buildPrintTable(cols){
     var cells = [];
     if(cols.wbs) cells.push({t:a.wbs});
     if(cols.id) cells.push({t:a.id});
-    if(cols.type) cells.push({t: summary?"Summary":(a.type==="milestone"?"Milestone":a.type==="event"?"Event":"Task")});
+    if(cols.type) cells.push({t: summary?"Summary":(a.type==="milestone"?"Milestone":a.type==="event"?"Event":a.type==="loe"?"Level of Effort":"Task")});
     cells.push({t:a.name});
-    if(cols.duration) cells.push({t: summary?"":fmtDurationText(a)});
+    if(cols.duration) cells.push({t: (summary||a.type==="loe")?summaryDurationText(res):fmtDurationText(a)});
     if(cols.qty) cells.push({t: summary?"":[a.qty,a.unit].filter(Boolean).join(" ")});
     if(cols.pred) cells.push({t: summary?"":a.predecessors});
     if(cols.succ) cells.push({t: summary?"":computeSuccessorsRaw(a.id)});
@@ -1553,14 +2108,14 @@ function buildFrozenHeaderHTML(cols, includePicker){
 function buildFrozenRowHTML(rd, cols, includePicker){
   var a = rd.a, summary = rd.summary, res = rd.res;
   if(!includePicker){
-    return '<div class="pg-wbs">'+esc(a.wbs)+'</div><div class="pg-id">'+esc(a.id)+'</div><div class="pg-name">'+esc(a.name)+'</div><div class="pg-dur">'+(summary?"":esc(fmtDurationText(a)))+'</div>';
+    return '<div class="pg-wbs">'+esc(a.wbs)+'</div><div class="pg-id">'+esc(a.id)+'</div><div class="pg-name">'+esc(a.name)+'</div><div class="pg-dur">'+((summary||a.type==="loe")?esc(summaryDurationText(res)):esc(fmtDurationText(a)))+'</div>';
   }
   var cells=[];
   if(cols.wbs) cells.push(pcell(PRINT_COL_PX.wbs, a.wbs));
   if(cols.id) cells.push(pcell(PRINT_COL_PX.id, a.id));
-  if(cols.type) cells.push(pcell(PRINT_COL_PX.type, summary?"Sum":(a.type==="milestone"?"MS":a.type==="event"?"Evt":"Task")));
+  if(cols.type) cells.push(pcell(PRINT_COL_PX.type, summary?"Sum":(a.type==="milestone"?"MS":a.type==="event"?"Evt":a.type==="loe"?"LOE":"Task")));
   cells.push('<div class="pg-name">'+esc(a.name)+'</div>');
-  if(cols.duration) cells.push(pcell(PRINT_COL_PX.duration, summary?"":fmtDurationText(a)));
+  if(cols.duration) cells.push(pcell(PRINT_COL_PX.duration, (summary||a.type==="loe")?summaryDurationText(res):fmtDurationText(a)));
   if(cols.qty) cells.push(pcell(PRINT_COL_PX.qty, summary?"":[a.qty,a.unit].filter(Boolean).join(" ")));
   if(cols.pred) cells.push(pcell(PRINT_COL_PX.pred, summary?"":a.predecessors));
   if(cols.succ) cells.push(pcell(PRINT_COL_PX.succ, summary?"":computeSuccessorsRaw(a.id)));
@@ -1758,7 +2313,8 @@ q("fileInput").addEventListener("change", function(e){
       });
       if(!data.calendar){ data.calendar = { workDays:[false,true,true,true,true,true,false], holidays: [] }; }
       if(!data.colWidths){ data.colWidths = Object.assign({}, DEFAULT_COL_WIDTHS); }
-      state = Object.assign({projectName:"Project",startDate:todayISO(),dayWidth:22,nextSeq:1,activities:[]}, data);
+      if(!data.numbering){ data.numbering = { prefix:"A", start:1, increment:1, next: (data.nextSeq||1) }; }
+      state = Object.assign({projectName:"Project",startDate:todayISO(),dayWidth:22,activities:[]}, data);
       syncTopFields();
       applyColWidths();
       recalcFull();
@@ -1795,6 +2351,7 @@ function loadLocal(){
         });
         if(!data.calendar) data.calendar = { workDays:[false,true,true,true,true,true,false], holidays: [] };
         if(!data.colWidths) data.colWidths = Object.assign({}, DEFAULT_COL_WIDTHS);
+        if(!data.numbering) data.numbering = { prefix:"A", start:1, increment:1, next: (data.nextSeq||1) };
         state = Object.assign(state, data);
         return true;
       }
@@ -1805,12 +2362,20 @@ function loadLocal(){
 
 /* ============================= INIT ============================= */
 (function init(){
+  try{
+    var storedMode = localStorage.getItem(DEVICE_MODE_KEY);
+    if(storedMode==="mobile" || storedMode==="desktop") deviceMode = storedMode;
+  }catch(e){}
+  applyDeviceModeClass();
+
   var restored = loadLocal();
   syncTopFields();
   applyColWidths();
   wireColumnResize();
   if(!restored) loadDemo();
   else recalcFull();
+
+  if(!deviceMode){ q("deviceModal").classList.add("open"); }
 
   /* Hero: skip automatically for returning users who already have a saved project;
      first-time visitors see it, and the CTA scrolls them straight into the tool. */
